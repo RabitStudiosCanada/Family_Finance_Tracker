@@ -12,7 +12,11 @@ This document outlines the learner-facing analytics dashboards to help track eng
    - Show month-over-month spending per category in stacked bars.
    - Highlight overspending alerts compared to user-defined budgets.
    - Provide quick filters for timeframe (30/60/90 days) and category types.
-3. **Task Completion Rewards**
+3. **Savings Goal Progress**
+   - Display percent-to-target gauges for each active goal with forecasted completion dates.
+   - Contrast learner agency commitments vs. guardian cash funding to highlight collaboration.
+   - Flag goals that are off-track based on remaining time vs. average contribution cadence.
+4. **Task Completion Rewards**
    - Track tasks completed vs. outstanding to reveal reward eligibility.
    - Summarize earned badges, unlocked rewards, and pending incentives.
    - Call out feedback prompts triggered by missed tasks.
@@ -35,6 +39,10 @@ Backend aggregation will live in `server/services/analytics.py`:
 - `get_spending_summary(learner_id, start_date, end_date)`
   - Join transactions with category metadata to compute totals, budgets, and variances.
   - Produce cumulative totals for stacked charts and highlight overspending flags.
+- `get_goal_progress(learner_id, include_household=false)`
+  - Aggregate goal_contributions by status to separate committed vs. funded amounts.
+  - Calculate projected completion date using trailing four-week contribution average.
+  - Return household-level rollups when `include_household` is true for guardian dashboards.
 - `get_task_reward_progress(learner_id)`
   - Aggregate completed tasks, earned badges, and outstanding incentives.
   - Emit triggers for feedback prompts when completion dips below threshold.
@@ -43,6 +51,7 @@ Frontend consumption will occur in `client/src/views/LearnerDashboard.vue`:
 
 - Use `useAnalyticsStore()` to request aggregated datasets via REST endpoints.
 - Render agency trend line charts, spending bar charts, and reward progress cards.
+- Display savings goal progress gauges with tooltips showing learner vs. guardian funding breakdown.
 - Show contextual feedback prompts when API payload includes `action_required` flags.
 
 ## Acceptance Criteria for Learner Features
