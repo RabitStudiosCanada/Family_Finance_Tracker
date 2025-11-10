@@ -12,6 +12,28 @@ FamilyFinance is more than an expense tracker - it's a **financial education sim
 
 ## 🏗️ System Architecture
 
+### Monorepo Developer Setup
+
+The codebase is organized as an npm workspaces monorepo with dedicated `backend/` and `frontend/` projects.
+
+```text
+family-finance-tracker/
+├── backend/   # Express API + Jest tests
+├── frontend/  # React + Vite + Tailwind UI
+└── shared tooling (ESLint, Prettier, Husky, lint-staged)
+```
+
+#### Root scripts
+
+| Command | Description |
+| --- | --- |
+| `npm install` | Install dependencies for all workspaces. |
+| `npm run lint` | Run ESLint across backend and frontend packages. |
+| `npm run format` | Format files with Prettier. |
+| `npm run test` | Execute workspace-level test scripts (backend uses Jest). |
+
+Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm run dev --workspace frontend`, etc.) for local development.
+
 ### Tech Stack
 
 **Backend:**

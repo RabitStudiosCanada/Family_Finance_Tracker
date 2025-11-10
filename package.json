@@ -1,0 +1,29 @@
+{
+  "name": "family-finance-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Family Finance Tracker monorepo",
+  "workspaces": ["backend", "frontend"],
+  "scripts": {
+    "lint": "eslint backend frontend --ext .js,.jsx",
+    "format": "prettier --write .",
+    "test": "npm run test --workspaces",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,json,md}": ["prettier --write"],
+    "backend/**/*.{js,jsx}": ["eslint --max-warnings=0"],
+    "frontend/src/**/*.{js,jsx}": ["eslint --max-warnings=0"]
+  }
+}
