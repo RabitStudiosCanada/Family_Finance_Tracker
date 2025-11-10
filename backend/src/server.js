@@ -1,9 +1,9 @@
-require('dotenv').config();
 const app = require('./app');
+const config = require('./config');
 
-const PORT = process.env.PORT || 4000;
+const { port } = config.server;
 
-app.listen(PORT, () => {
+app.listen(port, () => {
   // eslint-disable-next-line no-console
-  console.log(`API server listening on port ${PORT}`);
+  console.log(`API server listening on port ${port}`);
 });

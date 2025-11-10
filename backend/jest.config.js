@@ -1,5 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
-  transform: {}
+  transform: {},
+  setupFiles: ['<rootDir>/jest.setup.js'],
 };

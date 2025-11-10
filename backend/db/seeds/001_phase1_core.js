@@ -1,4 +1,8 @@
+const bcrypt = require('bcryptjs');
+
 const toCents = (amount) => Math.round(amount * 100);
+const hashPassword = (password) => bcrypt.hashSync(password, 10);
+const DEFAULT_USER_PASSWORD = 'AgencyPass123!';
 
 exports.seed = async function seed(knex) {
   await knex('agency_snapshots').del();
@@ -28,7 +32,7 @@ exports.seed = async function seed(knex) {
       id: '0b9f8b26-78fa-4cb9-80c6-e6be75a8351f',
       role_id: 1,
       email: 'admin@agency.local',
-      password_hash: '$2b$10$5kV5dcm3.bogushashedpasswordstring1111111111111111111111',
+      password_hash: hashPassword(DEFAULT_USER_PASSWORD),
       first_name: 'Avery',
       last_name: 'Admin',
     },
@@ -36,7 +40,7 @@ exports.seed = async function seed(knex) {
       id: '2f4bc7c2-28b2-4560-802d-843a25309483',
       role_id: 2,
       email: 'jordan.parent@agency.local',
-      password_hash: '$2b$10$5kV5dcm3.bogushashedpasswordstring2222222222222222222222',
+      password_hash: hashPassword(DEFAULT_USER_PASSWORD),
       first_name: 'Jordan',
       last_name: 'Parent',
     },
@@ -44,7 +48,7 @@ exports.seed = async function seed(knex) {
       id: 'cd7a0cb4-f654-4c7e-b5f5-a48d7ad4198c',
       role_id: 2,
       email: 'casey.partner@agency.local',
-      password_hash: '$2b$10$5kV5dcm3.bogushashedpasswordstring3333333333333333333333',
+      password_hash: hashPassword(DEFAULT_USER_PASSWORD),
       first_name: 'Casey',
       last_name: 'Partner',
     },
