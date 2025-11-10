@@ -5,13 +5,18 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test": "jest"
+    "test": "jest",
+    "migrate": "knex migrate:latest --knexfile knexfile.js",
+    "rollback": "knex migrate:rollback --knexfile knexfile.js",
+    "seed": "knex seed:run --knexfile knexfile.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "morgan": "^1.10.0"
+    "knex": "^3.1.0",
+    "morgan": "^1.10.0",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "jest": "^29.7.0",
