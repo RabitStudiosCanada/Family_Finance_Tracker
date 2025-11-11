@@ -6,6 +6,10 @@ const DEFAULT_USER_PASSWORD = 'AgencyPass123!';
 
 exports.seed = async function seed(knex) {
   await knex('agency_snapshots').del();
+  await knex('savings_contributions').del();
+  await knex('savings_goals').del();
+  await knex('category_budgets').del();
+  await knex('projected_expenses').del();
   await knex('transactions').del();
   await knex('credit_card_cycles').del();
   await knex('income_streams').del();
@@ -250,6 +254,125 @@ exports.seed = async function seed(knex) {
       currency: 'CAD',
       is_pending: false,
       occurred_at: `${transaction.transaction_date}T12:00:00.000Z`,
+      created_at: knex.fn.now(),
+      updated_at: knex.fn.now(),
+    }))
+  );
+
+  const projectedExpenses = [
+    {
+      id: 'a3cbf978-0aa0-4d9d-b6dd-73c2c58fb0b1',
+      user_id: users[1].id,
+      credit_card_id: creditCards[0].id,
+      amount_cents: toCents(325.5),
+      category: 'Groceries',
+      expected_date: '2025-11-15',
+      status: 'committed',
+      notes: 'Holiday dinner ingredients',
+      committed_at: knex.fn.now(),
+    },
+    {
+      id: '62e6f3ff-4fa1-4ceb-a5b7-48e119d0238e',
+      user_id: users[1].id,
+      amount_cents: toCents(189.99),
+      category: 'Utilities',
+      expected_date: '2025-11-28',
+      status: 'planned',
+      notes: 'Electric bill projection',
+    },
+  ];
+
+  await knex('projected_expenses').insert(
+    projectedExpenses.map((expense) => ({
+      ...expense,
+      created_at: knex.fn.now(),
+      updated_at: knex.fn.now(),
+    }))
+  );
+
+  const savingsGoals = [
+    {
+      id: 'df649f8e-22d4-4f01-8c5f-251af1d65231',
+      owner_user_id: users[1].id,
+      name: 'Emergency Fund',
+      target_amount_cents: toCents(5000),
+      start_date: '2025-10-01',
+      target_date: '2026-04-01',
+      status: 'active',
+      category: 'Safety Net',
+      notes: 'Six months of expenses',
+    },
+    {
+      id: 'af5a09a0-b9f1-4d18-9fd5-82f6a0bd517d',
+      owner_user_id: users[1].id,
+      name: 'Family Vacation 2026',
+      target_amount_cents: toCents(3200),
+      start_date: '2025-09-01',
+      target_date: '2026-06-15',
+      status: 'active',
+      category: 'Travel',
+    },
+  ];
+
+  await knex('savings_goals').insert(
+    savingsGoals.map((goal) => ({
+      ...goal,
+      created_at: knex.fn.now(),
+      updated_at: knex.fn.now(),
+    }))
+  );
+
+  const savingsContributions = [
+    {
+      id: '515cc3d3-8f53-4ed3-9b95-89c0453a4b2f',
+      goal_id: savingsGoals[0].id,
+      user_id: users[1].id,
+      amount_cents: toCents(500),
+      source: 'manual',
+      contribution_date: '2025-10-15',
+      notes: 'Initial transfer',
+    },
+    {
+      id: '7c706587-9f1e-420f-b94d-a9f6b7e6a35d',
+      goal_id: savingsGoals[1].id,
+      user_id: users[1].id,
+      amount_cents: toCents(250),
+      source: 'manual',
+      contribution_date: '2025-10-20',
+    },
+  ];
+
+  await knex('savings_contributions').insert(
+    savingsContributions.map((contribution) => ({
+      ...contribution,
+      created_at: knex.fn.now(),
+      updated_at: knex.fn.now(),
+    }))
+  );
+
+  const categoryBudgets = [
+    {
+      id: '6a28271c-9383-4f01-a1de-1ba459a6cf4e',
+      user_id: users[1].id,
+      category: 'Groceries',
+      period: 'monthly',
+      limit_amount_cents: toCents(900),
+      warning_threshold: 0.85,
+    },
+    {
+      id: '0d3db1a1-2e9f-4e49-86ec-8adbd26e4a8f',
+      user_id: users[1].id,
+      category: 'Dining Out',
+      period: 'monthly',
+      limit_amount_cents: toCents(300),
+      warning_threshold: 0.8,
+    },
+  ];
+
+  await knex('category_budgets').insert(
+    categoryBudgets.map((budget) => ({
+      ...budget,
+      is_active: true,
       created_at: knex.fn.now(),
       updated_at: knex.fn.now(),
     }))

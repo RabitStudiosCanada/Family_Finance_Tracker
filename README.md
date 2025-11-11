@@ -982,23 +982,23 @@ npm run seed:demo
 
 **Goal:** Forward-looking budget management
 
-- [ ] Projected expenses
-  - [ ] Add future/planned expenses
-  - [ ] Mark as actual when purchased
-  - [ ] Factor into agency calculation
+- [x] Projected expenses (backend APIs & seeds)
+  - [x] Add future/planned expenses
+  - [x] Mark as actual when purchased (status transitions)
+  - [x] Factor into agency calculation
   - [ ] Grocery list template (common categories)
-- [ ] Savings goals (adult/family only for now)
-  - [ ] Create goal with target amount
-  - [ ] Manual contributions
-  - [ ] Progress visualization
-  - [ ] Goal completion flow
-  - [ ] Abandonment with explanation form
-- [ ] Enhanced agency calculation
-  - [ ] Factor in projected expenses
-  - [ ] Factor in savings commitments
-  - [ ] Show "safe to spend" vs "technically available"
+- [x] Savings goals (adult/family only for now)
+  - [x] Create goal with target amount
+  - [x] Manual contributions
+  - [ ] Progress visualization (frontend)
+  - [x] Goal completion flow
+  - [x] Abandonment with explanation form
+- [x] Enhanced agency calculation
+  - [x] Factor in projected expenses
+  - [x] Factor in savings commitments
+  - [x] Show "safe to spend" vs "technically available"
 - [ ] Category budgeting
-  - [ ] Set monthly budget per category
+  - [x] Set monthly budget per category (API)
   - [ ] Track spending vs. budget
   - [ ] Visual progress bars
   - [ ] Warning when approaching category limit
