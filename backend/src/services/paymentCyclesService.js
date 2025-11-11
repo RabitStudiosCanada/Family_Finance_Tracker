@@ -269,6 +269,54 @@ const listPaymentCycles = async (currentUser, { userId, asOf } = {}) => {
   return summaries.map(serializePaymentCycle);
 };
 
+const recordPaymentForCycle = async (currentUser, id, payload = {}) => {
+  const cycle = await creditCardCyclesRepository.findById(id);
+
+  if (!cycle) {
+    throw createError(404, 'Payment cycle not found');
+  }
+
+  const card = await creditCardsRepository.findById(cycle.credit_card_id, {
+    includeInactive: true,
+  });
+
+  if (!card) {
+    throw createError(404, 'Payment cycle not found');
+  }
+
+  if (currentUser.role !== 'admin' && card.user_id !== currentUser.id) {
+    throw createError(404, 'Payment cycle not found');
+  }
+
+  let paymentRecordedOn = null;
+
+  if (payload.clear) {
+    paymentRecordedOn = null;
+  } else if (payload.paymentRecordedOn) {
+    const normalized = toDate(payload.paymentRecordedOn);
+
+    if (!normalized) {
+      throw createError(400, 'Unable to parse provided payment date');
+    }
+
+    paymentRecordedOn = toIsoDate(normalized);
+  } else {
+    paymentRecordedOn = toIsoDate(new Date());
+  }
+
+  await creditCardCyclesRepository.updateById(id, {
+    payment_recorded_on: paymentRecordedOn,
+  });
+
+  const summaries = await listPaymentCycles(currentUser, {
+    userId: card.user_id,
+    asOf: payload.asOf,
+  });
+
+  return summaries.find((entry) => entry.creditCardId === card.id) || null;
+};
+
 module.exports = {
   listPaymentCycles,
+  recordPaymentForCycle,
 };

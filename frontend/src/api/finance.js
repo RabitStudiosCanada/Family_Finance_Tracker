@@ -26,6 +26,13 @@ export const fetchTransactions = (token, params = {}) => {
   });
 };
 
+export const createTransaction = (token, payload) =>
+  apiFetch('/transactions', {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
 export const fetchAgencySnapshots = (token, params = {}) => {
   const query = new URLSearchParams(params).toString();
   const suffix = query ? `?${query}` : '';
@@ -52,3 +59,10 @@ export const fetchPaymentCycles = (token, params = {}) => {
     token,
   });
 };
+
+export const recordPaymentCycle = (token, cycleId, payload = {}) =>
+  apiFetch(`/payment-cycles/${cycleId}/record-payment`, {
+    method: 'POST',
+    token,
+    body: payload,
+  });

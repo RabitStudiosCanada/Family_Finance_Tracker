@@ -3,6 +3,7 @@ import { useQuery } from '../hooks/useQuery';
 
 import MetricCard from '../components/MetricCard.jsx';
 import PageHeader from '../components/PageHeader.jsx';
+import QuickAddTransaction from '../components/QuickAddTransaction.jsx';
 import { useAuth } from '../providers/AuthProvider.jsx';
 import {
   fetchAgencySnapshots,
@@ -85,8 +86,17 @@ export default function OverviewPage() {
     staleTime: 30_000,
   });
 
+  const { refetch: refetchAgency } = agencyQuery;
+  const { refetch: refetchExpenses } = transactionsQuery;
+
+  const handleQuickAddSuccess = () => {
+    refetchExpenses();
+    refetchAgency();
+  };
+
   const latestSnapshot = agencyQuery.data?.snapshots?.[0] ?? null;
   const metrics = metricsConfig(latestSnapshot);
+  const warnings = latestSnapshot?.warnings ?? [];
 
   const nextPayment = useMemo(() => {
     const cycles = paymentCyclesQuery.data?.paymentCycles ?? [];
@@ -144,6 +154,62 @@ export default function OverviewPage() {
           ))}
         </div>
       ) : null}
+
+      <div className="mt-10 grid gap-6 lg:grid-cols-2">
+        <QuickAddTransaction
+          creditCards={creditCardsQuery.data?.creditCards ?? []}
+          onSuccess={handleQuickAddSuccess}
+        />
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Financial warnings
+            </h2>
+            <p className="text-sm text-slate-600">
+              We flag when backed agency or credit utilization crosses key
+              thresholds.
+            </p>
+          </header>
+
+          {warnings.length ? (
+            <ul className="space-y-3">
+              {warnings.map((warning) => {
+                const toneClass =
+                  {
+                    critical: 'border-rose-200 bg-rose-50 text-rose-900',
+                    warning: 'border-orange-200 bg-orange-50 text-orange-900',
+                    caution: 'border-amber-200 bg-amber-50 text-amber-900',
+                  }[warning.level] ||
+                  'border-slate-200 bg-slate-50 text-slate-800';
+
+                const descriptor =
+                  warning.type === 'backedAgency'
+                    ? 'Backed agency coverage'
+                    : 'Credit utilization';
+
+                return (
+                  <li
+                    key={`${warning.type}-${warning.threshold}`}
+                    className={`rounded-xl border p-4 shadow-sm ${toneClass}`}
+                  >
+                    <p className="text-sm font-semibold">{warning.message}</p>
+                    <p className="mt-1 text-xs text-slate-700">
+                      {descriptor} at {Math.round(warning.percent)}% (threshold{' '}
+                      {warning.threshold}%).
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-600">
+              No warnings triggered. You have healthy backed agency and credit
+              headroom.
+            </p>
+          )}
+        </section>
+      </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

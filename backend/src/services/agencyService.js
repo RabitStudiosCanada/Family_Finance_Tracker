@@ -11,6 +11,11 @@ const { serializeAgencySnapshot } = require('../utils/serializers');
 
 const LOOKAHEAD_DAYS = 45;
 const CREDIT_SAFETY_BUFFER_PERCENT = 0.05;
+const WARNING_LEVEL_PRIORITY = {
+  critical: 0,
+  warning: 1,
+  caution: 2,
+};
 
 const toDate = (value) => {
   if (!value) {
@@ -33,6 +38,114 @@ const addDays = (date, days) => {
 };
 
 const toIsoDate = (date) => date.toISOString().slice(0, 10);
+
+const classifyThreshold = (percent) => {
+  if (percent >= 95) {
+    return { level: 'critical', threshold: 95 };
+  }
+
+  if (percent >= 85) {
+    return { level: 'warning', threshold: 85 };
+  }
+
+  if (percent >= 75) {
+    return { level: 'caution', threshold: 75 };
+  }
+
+  return null;
+};
+
+const backedAgencyMessage = (threshold) => {
+  switch (threshold) {
+    case 95:
+      return 'Projected obligations are consuming at least 95% of expected income for the next 45 days. Only essential purchases are recommended.';
+    case 85:
+      return 'Projected obligations are consuming at least 85% of expected income for the next 45 days. Plan for limited backed agency.';
+    case 75:
+    default:
+      return 'Projected obligations are consuming at least 75% of expected income for the next 45 days. Monitor discretionary spending.';
+  }
+};
+
+const creditUtilizationMessage = (threshold) => {
+  switch (threshold) {
+    case 95:
+      return 'Credit utilization across tracked cards is above 95%. Make a payment immediately to avoid interest risk.';
+    case 85:
+      return 'Credit utilization across tracked cards is above 85%. Consider paying down balances soon.';
+    case 75:
+    default:
+      return 'Credit utilization across tracked cards is above 75%. Keep balances from climbing further.';
+  }
+};
+
+const decorateSnapshot = (snapshot, { totalCreditLimitCents }) => {
+  const projectedObligationsCents = snapshot.projectedObligationsCents ?? 0;
+  const backedAgencyCents = snapshot.backedAgencyCents ?? 0;
+  const availableCreditCents = snapshot.availableCreditCents ?? 0;
+  const upcomingIncomeCents = projectedObligationsCents + backedAgencyCents;
+
+  const backedCoveragePercent = upcomingIncomeCents
+    ? Math.min(
+        Math.round((projectedObligationsCents / upcomingIncomeCents) * 100),
+        100
+      )
+    : projectedObligationsCents > 0
+      ? 100
+      : 0;
+
+  const creditUtilizationPercent =
+    totalCreditLimitCents > 0
+      ? Math.min(
+          Math.round(
+            ((totalCreditLimitCents - availableCreditCents) /
+              totalCreditLimitCents) *
+              100
+          ),
+          100
+        )
+      : null;
+
+  const warnings = [];
+  const backedAssessment = classifyThreshold(backedCoveragePercent);
+
+  if (backedAssessment) {
+    warnings.push({
+      type: 'backedAgency',
+      level: backedAssessment.level,
+      threshold: backedAssessment.threshold,
+      percent: backedCoveragePercent,
+      message: backedAgencyMessage(backedAssessment.threshold),
+    });
+  }
+
+  if (creditUtilizationPercent !== null) {
+    const creditAssessment = classifyThreshold(creditUtilizationPercent);
+
+    if (creditAssessment) {
+      warnings.push({
+        type: 'creditUtilization',
+        level: creditAssessment.level,
+        threshold: creditAssessment.threshold,
+        percent: creditUtilizationPercent,
+        message: creditUtilizationMessage(creditAssessment.threshold),
+      });
+    }
+  }
+
+  warnings.sort(
+    (a, b) => WARNING_LEVEL_PRIORITY[a.level] - WARNING_LEVEL_PRIORITY[b.level]
+  );
+
+  return {
+    ...snapshot,
+    totalCreditLimitCents,
+    upcomingIncomeCents,
+    backedCoveragePercent,
+    creditUtilizationPercent,
+    warnings,
+  };
+};
 
 const addInterval = (date, frequency) => {
   const next = new Date(date.getTime());
@@ -224,17 +337,33 @@ const calculateSnapshotForUser = async (
   const savedSnapshot =
     await agencySnapshotsRepository.upsertSnapshot(snapshotRecord);
 
-  return serializeAgencySnapshot(savedSnapshot);
+  const serialized = serializeAgencySnapshot(savedSnapshot);
+
+  return decorateSnapshot(serialized, {
+    totalCreditLimitCents,
+  });
 };
 
 const listSnapshots = async (currentUser, { userId, limit } = {}) => {
   const targetUserId = await resolveTargetUserId(currentUser, userId);
-  const snapshots = await agencySnapshotsRepository.findByUserId({
-    userId: targetUserId,
-    limit,
-  });
+  const [snapshots, creditCards] = await Promise.all([
+    agencySnapshotsRepository.findByUserId({
+      userId: targetUserId,
+      limit,
+    }),
+    creditCardsRepository.findByUserId({ userId: targetUserId }),
+  ]);
 
-  return snapshots.map(serializeAgencySnapshot);
+  const totalCreditLimitCents = creditCards.reduce(
+    (sum, card) => sum + (card.credit_limit_cents || 0),
+    0
+  );
+
+  return snapshots.map((snapshot) =>
+    decorateSnapshot(serializeAgencySnapshot(snapshot), {
+      totalCreditLimitCents,
+    })
+  );
 };
 
 const getSnapshotByDate = async (
@@ -243,16 +372,23 @@ const getSnapshotByDate = async (
   { userId } = {}
 ) => {
   const targetUserId = await resolveTargetUserId(currentUser, userId);
-  const snapshot = await agencySnapshotsRepository.findByUserIdAndDate(
-    targetUserId,
-    calculatedFor
-  );
+  const [snapshot, creditCards] = await Promise.all([
+    agencySnapshotsRepository.findByUserIdAndDate(targetUserId, calculatedFor),
+    creditCardsRepository.findByUserId({ userId: targetUserId }),
+  ]);
 
   if (!snapshot) {
     throw createError(404, 'Agency snapshot not found');
   }
 
-  return serializeAgencySnapshot(snapshot);
+  const totalCreditLimitCents = creditCards.reduce(
+    (sum, card) => sum + (card.credit_limit_cents || 0),
+    0
+  );
+
+  return decorateSnapshot(serializeAgencySnapshot(snapshot), {
+    totalCreditLimitCents,
+  });
 };
 
 const recalculateSnapshot = async (currentUser, payload = {}) => {

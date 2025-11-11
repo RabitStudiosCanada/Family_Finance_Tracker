@@ -24,14 +24,42 @@ const baseQuery = () =>
 
 const findById = (id) => baseQuery().where('transactions.id', id).first();
 
-const findByUserId = ({ userId, type }) => {
+const findByUserId = ({
+  userId,
+  type,
+  startDate,
+  endDate,
+  category,
+  creditCardId,
+}) => {
   const query = baseQuery().where('transactions.user_id', userId);
 
   if (type) {
     query.andWhere('transactions.type', type);
   }
 
-  return query.orderBy('transactions.transaction_date', 'desc');
+  if (startDate) {
+    query.andWhere('transactions.transaction_date', '>=', startDate);
+  }
+
+  if (endDate) {
+    query.andWhere('transactions.transaction_date', '<=', endDate);
+  }
+
+  if (category) {
+    query.andWhereRaw(
+      'LOWER(transactions.category) = ?',
+      category.toLowerCase()
+    );
+  }
+
+  if (creditCardId) {
+    query.andWhere('transactions.credit_card_id', creditCardId);
+  }
+
+  return query
+    .orderBy('transactions.transaction_date', 'desc')
+    .orderBy('transactions.created_at', 'desc');
 };
 
 const findByUserIdWithinDateRange = ({ userId, startDate, endDate, type }) => {

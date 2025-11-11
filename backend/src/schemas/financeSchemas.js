@@ -4,6 +4,13 @@ const idParamSchema = z.object({
   id: z.string().uuid(),
 });
 
+const isoDateString = z
+  .string()
+  .regex(
+    /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u,
+    'Date must be formatted as YYYY-MM-DD'
+  );
+
 const booleanString = z
   .enum(['true', 'false'])
   .transform((value) => value === 'true');
@@ -154,7 +161,20 @@ const listTransactionsSchema = z.object({
   query: z
     .object({
       type: z.enum(['expense', 'income', 'payment', 'transfer']).optional(),
+      startDate: isoDateString.optional(),
+      endDate: isoDateString.optional(),
+      category: z.string().trim().min(1).max(120).optional(),
+      creditCardId: z.string().uuid().optional(),
       userId: z.string().uuid().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.startDate && data.endDate && data.startDate > data.endDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Start date cannot be after end date',
+          path: ['startDate'],
+        });
+      }
     })
     .default({}),
 });
