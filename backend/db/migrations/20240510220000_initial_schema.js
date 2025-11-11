@@ -1,9 +1,6 @@
 const addTimestamps = (table, knex) => {
   table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
-  table
-    .timestamp('updated_at')
-    .notNullable()
-    .defaultTo(knex.fn.now());
+  table.timestamp('updated_at').notNullable().defaultTo(knex.fn.now());
 };
 
 exports.up = async function up(knex) {
@@ -62,10 +59,26 @@ exports.up = async function up(knex) {
     table.timestamp('opened_at');
     table.timestamp('closed_at');
     addTimestamps(table, knex);
-    table.checkBetween('cycle_anchor_day', [1, 31], 'credit_cards_cycle_anchor_day_check');
-    table.checkBetween('statement_day', [1, 31], 'credit_cards_statement_day_check');
-    table.checkBetween('payment_due_day', [1, 31], 'credit_cards_payment_due_day_check');
-    table.check('credit_limit_cents > 0', [], 'credit_cards_credit_limit_positive');
+    table.check(
+      'cycle_anchor_day BETWEEN 1 AND 31',
+      [],
+      'credit_cards_cycle_anchor_day_check'
+    );
+    table.check(
+      'statement_day BETWEEN 1 AND 31',
+      [],
+      'credit_cards_statement_day_check'
+    );
+    table.check(
+      'payment_due_day BETWEEN 1 AND 31',
+      [],
+      'credit_cards_payment_due_day_check'
+    );
+    table.check(
+      'credit_limit_cents > 0',
+      [],
+      'credit_cards_credit_limit_positive'
+    );
   });
 
   await knex.schema.createTable('income_streams', (table) => {
@@ -79,7 +92,14 @@ exports.up = async function up(knex) {
     table.string('name', 120).notNullable();
     table.integer('amount_cents').notNullable();
     table
-      .enu('frequency', ['weekly', 'biweekly', 'semimonthly', 'monthly', 'quarterly', 'annually'])
+      .enu('frequency', [
+        'weekly',
+        'biweekly',
+        'semimonthly',
+        'monthly',
+        'quarterly',
+        'annually',
+      ])
       .notNullable();
     table.date('next_expected_date');
     table.boolean('is_active').notNullable().defaultTo(true);
@@ -106,9 +126,21 @@ exports.up = async function up(knex) {
     table.timestamp('closed_at');
     addTimestamps(table, knex);
     table.unique(['credit_card_id', 'cycle_number']);
-    table.check('cycle_number > 0', [], 'credit_card_cycles_cycle_number_positive');
-    table.check('statement_balance_cents >= 0', [], 'credit_card_cycles_balance_non_negative');
-    table.check('minimum_payment_cents >= 0', [], 'credit_card_cycles_minimum_non_negative');
+    table.check(
+      'cycle_number > 0',
+      [],
+      'credit_card_cycles_cycle_number_positive'
+    );
+    table.check(
+      'statement_balance_cents >= 0',
+      [],
+      'credit_card_cycles_balance_non_negative'
+    );
+    table.check(
+      'minimum_payment_cents >= 0',
+      [],
+      'credit_card_cycles_minimum_non_negative'
+    );
   });
 
   await knex.schema.createTable('transactions', (table) => {
@@ -171,10 +203,26 @@ exports.up = async function up(knex) {
     table.string('notes', 500);
     addTimestamps(table, knex);
     table.unique(['user_id', 'calculated_for']);
-    table.check('credit_agency_cents >= 0', [], 'agency_snapshots_credit_non_negative');
-    table.check('backed_agency_cents >= 0', [], 'agency_snapshots_backed_non_negative');
-    table.check('available_credit_cents >= 0', [], 'agency_snapshots_available_non_negative');
-    table.check('projected_obligations_cents >= 0', [], 'agency_snapshots_obligations_non_negative');
+    table.check(
+      'credit_agency_cents >= 0',
+      [],
+      'agency_snapshots_credit_non_negative'
+    );
+    table.check(
+      'backed_agency_cents >= 0',
+      [],
+      'agency_snapshots_backed_non_negative'
+    );
+    table.check(
+      'available_credit_cents >= 0',
+      [],
+      'agency_snapshots_available_non_negative'
+    );
+    table.check(
+      'projected_obligations_cents >= 0',
+      [],
+      'agency_snapshots_obligations_non_negative'
+    );
   });
 };
 
