@@ -1009,25 +1009,25 @@ This is a personal project currently under active development. Once stable, cont
   - [x] Add/edit income sources
   - [x] Set frequency (weekly, biweekly, monthly)
   - [x] Forecast upcoming deposits
-- [ ] Transaction management
+- [x] Transaction management
   - [x] Manual entry with category
   - [x] Edit/delete transactions
-  - [ ] Filter by date, category, card
+  - [x] Filter by date, category, card
 - [x] Agency calculation engine
   - [x] Calculate credit agency (limits - spending)
   - [x] Calculate backed agency (income - obligations)
   - [x] Display both prominently
-  - [ ] Warning system (75%, 85%, 95% thresholds)
+  - [x] Warning system (75%, 85%, 95% thresholds)
 - [x] Payment cycle tracking
   - [x] Current cycle dashboard
   - [x] Days until statement close / due date
   - [x] Suggested payment amounts (two-payment strategy)
-  - [ ] Mark payments as made
+  - [x] Mark payments as made
 - [x] Basic dashboard
   - [x] Agency meters (visual indicators)
   - [x] Recent transactions
   - [x] Upcoming payments
-  - [ ] Quick-add transaction
+  - [x] Quick-add transaction
 
 **Deliverable:** Adults can track all credit cards and income, see real-time agency, and review upcoming obligations in the authenticated frontend shell.
 
