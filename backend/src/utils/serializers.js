@@ -18,6 +18,8 @@ const serializeUser = (user) =>
     email: user.email,
     firstName: user.first_name,
     lastName: user.last_name,
+    isActive: user.is_active,
+    archivedAt: user.archived_at,
     role: pickDefined({
       id: user.role_id,
       code: user.role_code,
