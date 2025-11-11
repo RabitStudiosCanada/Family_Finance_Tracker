@@ -99,10 +99,48 @@ const serializeAgencySnapshot = (snapshot) =>
     updatedAt: snapshot.updated_at,
   });
 
+const serializePaymentCycle = (cycle) =>
+  pickDefined({
+    creditCardId: cycle.creditCardId,
+    creditCardNickname: cycle.creditCardNickname,
+    creditCardIssuer: cycle.creditCardIssuer,
+    creditCardLastFour: cycle.creditCardLastFour,
+    autopayEnabled: cycle.autopayEnabled,
+    calculatedFor: cycle.calculatedFor,
+    recommendedPaymentCents: cycle.recommendedPaymentCents,
+    totalStatementBalanceCents: cycle.totalStatementBalanceCents,
+    currentCycle: cycle.currentCycle
+      ? pickDefined({
+          id: cycle.currentCycle.id,
+          cycleNumber: cycle.currentCycle.cycleNumber,
+          cycleStartDate: cycle.currentCycle.cycleStartDate,
+          statementDate: cycle.currentCycle.statementDate,
+          paymentDueDate: cycle.currentCycle.paymentDueDate,
+          statementBalanceCents: cycle.currentCycle.statementBalanceCents,
+          minimumPaymentCents: cycle.currentCycle.minimumPaymentCents,
+          paymentRecordedOn: cycle.currentCycle.paymentRecordedOn,
+          daysUntilPaymentDue: cycle.currentCycle.daysUntilPaymentDue,
+          daysSinceStatement: cycle.currentCycle.daysSinceStatement,
+          isOverdue: cycle.currentCycle.isOverdue,
+          isPaid: cycle.currentCycle.isPaid,
+        })
+      : undefined,
+    upcomingCycle: cycle.upcomingCycle
+      ? pickDefined({
+          cycleStartDate: cycle.upcomingCycle.cycleStartDate,
+          statementDate: cycle.upcomingCycle.statementDate,
+          paymentDueDate: cycle.upcomingCycle.paymentDueDate,
+          daysUntilStatement: cycle.upcomingCycle.daysUntilStatement,
+          daysUntilPaymentDue: cycle.upcomingCycle.daysUntilPaymentDue,
+        })
+      : undefined,
+  });
+
 module.exports = {
   serializeUser,
   serializeCreditCard,
   serializeIncomeStream,
   serializeTransaction,
   serializeAgencySnapshot,
+  serializePaymentCycle,
 };

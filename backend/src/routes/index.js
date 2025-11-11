@@ -4,6 +4,7 @@ const authRoutes = require('./authRoutes');
 const agencyRoutes = require('./agencyRoutes');
 const creditCardsRoutes = require('./creditCardsRoutes');
 const incomeStreamsRoutes = require('./incomeStreamsRoutes');
+const paymentCyclesRoutes = require('./paymentCyclesRoutes');
 const transactionsRoutes = require('./transactionsRoutes');
 const usersRoutes = require('./usersRoutes');
 const { requireAuth, requireRole } = require('../middleware/authMiddleware');
@@ -15,6 +16,7 @@ router.use('/users', requireAuth, requireRole('admin'), usersRoutes);
 router.use('/agency', requireAuth, agencyRoutes);
 router.use('/credit-cards', requireAuth, creditCardsRoutes);
 router.use('/income-streams', requireAuth, incomeStreamsRoutes);
+router.use('/payment-cycles', requireAuth, paymentCyclesRoutes);
 router.use('/transactions', requireAuth, transactionsRoutes);
 
 module.exports = router;

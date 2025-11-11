@@ -22,6 +22,7 @@ describe('Finance API', () => {
   let adminToken;
   let adultToken;
   let adultUser;
+  let adultCreditCard;
   let partnerCreditCard;
 
   beforeAll(async () => {
@@ -38,6 +39,9 @@ describe('Finance API', () => {
 
     adultUser = await knex('users')
       .where({ email: adultCredentials.email })
+      .first();
+    adultCreditCard = await knex('credit_cards')
+      .where({ user_id: adultUser.id })
       .first();
     partnerCreditCard = await knex('credit_cards')
       .whereNot({ user_id: adultUser.id })
@@ -258,6 +262,63 @@ describe('Finance API', () => {
         .where({ id: transactionId })
         .first();
       expect(storedTransaction).toBeUndefined();
+    });
+  });
+
+  describe('Payment Cycles', () => {
+    const referenceDate = '2025-11-15';
+
+    it('returns cycle summaries for the authenticated adult', async () => {
+      const response = await request(app)
+        .get('/api/payment-cycles')
+        .query({ asOf: referenceDate })
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.data.paymentCycles)).toBe(true);
+      expect(response.body.data.paymentCycles.length).toBeGreaterThan(0);
+
+      const summary = response.body.data.paymentCycles.find(
+        (cycle) => cycle.creditCardId === adultCreditCard.id
+      );
+
+      expect(summary).toBeDefined();
+      expect(summary.autopayEnabled).toBe(true);
+      expect(summary.calculatedFor).toBe(referenceDate);
+      expect(summary.recommendedPaymentCents).toBe(
+        summary.currentCycle.minimumPaymentCents
+      );
+      expect(summary.currentCycle.statementBalanceCents).toBe(264075);
+      expect(summary.currentCycle.daysUntilPaymentDue).toBe(18);
+      expect(summary.upcomingCycle.statementDate).toBe('2025-12-08');
+      expect(summary.upcomingCycle.daysUntilStatement).toBe(23);
+      expect(summary.upcomingCycle.paymentDueDate).toBe('2026-01-03');
+      expect(summary.upcomingCycle.daysUntilPaymentDue).toBe(49);
+    });
+
+    it('allows admins to query payment cycles for a specific user', async () => {
+      const response = await request(app)
+        .get('/api/payment-cycles')
+        .query({ asOf: referenceDate, userId: partnerCreditCard.user_id })
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+
+      const summary = response.body.data.paymentCycles.find(
+        (cycle) => cycle.creditCardId === partnerCreditCard.id
+      );
+
+      expect(summary).toBeDefined();
+      expect(summary.autopayEnabled).toBe(false);
+      expect(summary.recommendedPaymentCents).toBe(
+        summary.currentCycle.statementBalanceCents
+      );
+      expect(summary.currentCycle.minimumPaymentCents).toBe(9230);
+      expect(summary.currentCycle.daysUntilPaymentDue).toBe(22);
+      expect(summary.upcomingCycle.statementDate).toBe('2025-12-13');
+      expect(summary.upcomingCycle.daysUntilStatement).toBe(28);
+      expect(summary.upcomingCycle.paymentDueDate).toBe('2026-01-07');
+      expect(summary.upcomingCycle.daysUntilPaymentDue).toBe(53);
     });
   });
 
