@@ -6,7 +6,7 @@
 
 FamilyFinance is more than an expense tracker - it's a **financial education simulator** where children learn credit literacy, responsibility, and money management in a safe, gamified environment backed by real parental oversight. Adults get powerful tools for multi-account tracking with credit-cycle-aware budgeting, while learners experience authentic financial mechanics through tasks, virtual credit, and real loan agreements.
 
-**Core Philosophy:** Teach children how credit, budgeting, and financial responsibility work by *doing* rather than lecturing.
+**Core Philosophy:** Teach children how credit, budgeting, and financial responsibility work by _doing_ rather than lecturing.
 
 ---
 
@@ -25,18 +25,19 @@ family-finance-tracker/
 
 #### Root scripts
 
-| Command | Description |
-| --- | --- |
-| `npm install` | Install dependencies for all workspaces. |
-| `npm run lint` | Run ESLint across backend and frontend packages. |
-| `npm run format` | Format files with Prettier. |
-| `npm run test` | Execute workspace-level test scripts (backend uses Jest). |
+| Command          | Description                                               |
+| ---------------- | --------------------------------------------------------- |
+| `npm install`    | Install dependencies for all workspaces.                  |
+| `npm run lint`   | Run ESLint across backend and frontend packages.          |
+| `npm run format` | Format files with Prettier.                               |
+| `npm run test`   | Execute workspace-level test scripts (backend uses Jest). |
 
 Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm run dev --workspace frontend`, etc.) for local development.
 
 ### Tech Stack
 
 **Backend:**
+
 - Node.js 20+ / Express 4
 - PostgreSQL 16
 - Knex.js (query builder + migrations)
@@ -46,6 +47,7 @@ Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm 
 - web-push (PWA push notifications)
 
 **Frontend:**
+
 - React 18 with hooks
 - React Router 6
 - TanStack Query (React Query)
@@ -54,12 +56,14 @@ Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm 
 - date-fns (date manipulation)
 
 **Infrastructure:**
+
 - Docker + Docker Compose
 - Nginx (reverse proxy, SSL termination)
 - Let's Encrypt SSL certificates
 - Self-hosted deployment model
 
 **Currency & Regional Settings:**
+
 - Canadian Dollar (CAD)
 - Canadian credit system (300-900 score range)
 - Bi-weekly pay period defaults (26 pays/year)
@@ -70,6 +74,7 @@ Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm 
 ## 🎭 User Roles & Capabilities
 
 ### Admin (Parents)
+
 - Full system access
 - Create/manage all accounts
 - Approve learner tasks and agreements
@@ -78,6 +83,7 @@ Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm 
 - Generate family financial reports
 
 ### Adult (Family Members)
+
 - Track personal credit cards
 - Manage income streams
 - Enter transactions
@@ -85,6 +91,7 @@ Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm 
 - View family dashboard (limited)
 
 ### Learner (Children)
+
 - Earn virtual agency through tasks
 - Submit expenses (requires approval if over limit)
 - Apply for financing agreements
@@ -99,8 +106,9 @@ Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm 
 ### Agency System
 
 **For Adults:**
+
 ```
-Available Agency = 
+Available Agency =
   (Sum of Credit Card Limits)
   - (Current Cycle Actual Spending)
   - (Projected Expenses Remaining This Cycle)
@@ -108,7 +116,7 @@ Available Agency =
 
 CONSTRAINED BY:
 
-Backed Agency = 
+Backed Agency =
   (Expected Income Before Due Date)
   - (Committed Savings Contributions)
   - (Learner Agency Owed)
@@ -118,8 +126,9 @@ Backed Agency =
 **Key Innovation:** The system tracks BOTH credit availability AND liquid funds to prevent over-extension.
 
 **For Learners:**
+
 ```
-Available Agency = 
+Available Agency =
   (Earned Through Tasks)
   - (Current Cycle Spending)
   - (Scheduled Agreement Payments)
@@ -134,13 +143,14 @@ Exception: Savings goals can exceed limit
 This is the amount parents immediately owe learners and must account for in their own budget:
 
 ```
-Learner Agency Owed = 
+Learner Agency Owed =
   (Approved Tasks Not Yet Paid Out on Payment Date)
   + (Down Payments & Full Purchase Amounts for Active Agreements)
   - (Monthly Payments Learner Has Made Back)
 ```
 
 **Example:**
+
 - Kid completes $15 task → Parent approves → Parent agency IMMEDIATELY -= $15
 - Kid applies for $850 PC loan → Parent approves → Parent agency IMMEDIATELY -= $850
 - Each month kid "pays" $67.71 → Parent agency += $67.71 (liability reduced)
@@ -148,6 +158,7 @@ Learner Agency Owed =
 ### Credit Cycles
 
 **Adult Cards:**
+
 - 30-day billing cycles
 - Statement close date
 - Payment due date (typically 21 days after statement)
@@ -155,6 +166,7 @@ Learner Agency Owed =
 - Tracks across multiple cards with different cycle dates
 
 **Learner Cycles:**
+
 - Synced to family credit cycles (teaching real-world timing)
 - Report due dates aligned with parent payment dates
 - Task earnings available immediately upon approval
@@ -171,6 +183,7 @@ Modeled after Canadian credit bureaus (Equifax/TransUnion), but simplified for e
 **Starting Score:** 650 (Fair/Average)
 
 **Score Factors:**
+
 1. **Payment History (35%)** - On-time report submissions, agreement payments
 2. **Credit Utilization (30%)** - Percentage of limit used per cycle
 3. **Length of Credit History (15%)** - Time since account opened
@@ -178,6 +191,7 @@ Modeled after Canadian credit bureaus (Equifax/TransUnion), but simplified for e
 5. **Parental Feedback (10%)** - Quality ratings, manual adjustments
 
 **Score Changes Trigger:**
+
 - Report submitted on time: +5 to +15 points
 - Report submitted late: -10 to -30 points
 - Low utilization (<30%): +5 to +10 points per cycle
@@ -192,11 +206,13 @@ Modeled after Canadian credit bureaus (Equifax/TransUnion), but simplified for e
 Agreements are real financial products with terms, interest, and consequences.
 
 #### Score 350-579 (Poor)
+
 - **No agreements available**
 - Must rebuild through tasks only
 - Educational message: "Focus on completing tasks and submitting reports on time to rebuild your credit"
 
 #### Score 580-669 (Fair)
+
 - **Starter Financing**
   - Up to $50
   - 5% interest
@@ -204,6 +220,7 @@ Agreements are real financial products with terms, interest, and consequences.
   - 20% down payment required
 
 #### Score 670-739 (Good)
+
 - **Standard Financing**
   - Up to $200
   - 3% interest
@@ -216,6 +233,7 @@ Agreements are real financial products with terms, interest, and consequences.
   - Requires business plan
 
 #### Score 740-799 (Very Good)
+
 - **Premium Financing**
   - Up to $500
   - 1% interest
@@ -230,6 +248,7 @@ Agreements are real financial products with terms, interest, and consequences.
   - Must maintain 740+ score
 
 #### Score 800+ (Excellent)
+
 - **Elite Financing**
   - Up to $1,000
   - 0.5% interest
@@ -245,9 +264,11 @@ Agreements are real financial products with terms, interest, and consequences.
 ### Agreement Types
 
 #### Purchase Financing
+
 Traditional installment loan for a specific item (gaming PC, bike, etc.)
 
 **Flow:**
+
 1. Learner identifies item and cost
 2. Writes justification (why needed, how they'll afford payments)
 3. Submits application
@@ -263,12 +284,15 @@ Traditional installment loan for a specific item (gaming PC, bike, etc.)
 9. Miss payment = late fee + credit score impact + item can be repossessed (teaching moment)
 
 **Interest Calculation:** Simple interest, educational but realistic
+
 - Monthly payment = (Principal - Down Payment) × (1 + (Rate × Months)) / Months
 
 #### Business Loan
+
 Funding for entrepreneurial projects (lemonade stand, bake sale, online store, etc.)
 
 **Flow:**
+
 1. Learner submits business plan:
    - What is the business?
    - Startup costs needed
@@ -285,6 +309,7 @@ Funding for entrepreneurial projects (lemonade stand, bake sale, online store, e
 6. Repays from profits OR from task earnings if business fails
 
 **Learning Outcomes:**
+
 - Business planning
 - Profit vs. revenue
 - Risk assessment
@@ -292,9 +317,11 @@ Funding for entrepreneurial projects (lemonade stand, bake sale, online store, e
 - Success = credit boost, failure with lessons = neutral, irresponsibility = credit hit
 
 #### Line of Credit
+
 Revolving credit for ongoing projects/expenses
 
 **Flow:**
+
 1. Available only at Good score or above
 2. Learner approved for $X revolving limit
 3. Can "draw" funds as needed (like a credit card)
@@ -309,6 +336,7 @@ Revolving credit for ongoing projects/expenses
 ### Core Tables
 
 #### users
+
 - `id` (PK)
 - `email` (unique)
 - `password_hash`
@@ -319,6 +347,7 @@ Revolving credit for ongoing projects/expenses
 - `updated_at`
 
 #### income_streams
+
 - `id` (PK)
 - `user_id` (FK)
 - `name` (e.g., "John's Salary")
@@ -328,6 +357,7 @@ Revolving credit for ongoing projects/expenses
 - `is_active`
 
 #### credit_cards
+
 - `id` (PK)
 - `name`
 - `credit_limit`
@@ -338,6 +368,7 @@ Revolving credit for ongoing projects/expenses
 - `is_active`
 
 #### transactions
+
 - `id` (PK)
 - `user_id` (FK)
 - `card_id` (FK, nullable)
@@ -351,6 +382,7 @@ Revolving credit for ongoing projects/expenses
 - `created_at`
 
 #### learner_credit_profiles
+
 - `learner_id` (PK, FK to users)
 - `current_score` (350-900)
 - `score_history` (JSON array: [{date, score, reason}])
@@ -363,6 +395,7 @@ Revolving credit for ongoing projects/expenses
 - `per_cycle_spending_limit` (set by parent)
 
 #### task_definitions
+
 Parent-created task templates
 
 - `id` (PK)
@@ -378,6 +411,7 @@ Parent-created task templates
 - `is_active`
 
 #### task_instances
+
 Actual task assignments
 
 - `id` (PK)
@@ -396,6 +430,7 @@ Actual task assignments
 - `status` (enum: 'assigned', 'completed', 'approved', 'rejected')
 
 #### agreements
+
 - `id` (PK)
 - `learner_id` (FK)
 - `type` (enum: 'purchase_financing', 'business_loan', 'line_of_credit')
@@ -411,6 +446,7 @@ Actual task assignments
 - `created_at`
 
 #### agreement_payments
+
 - `id` (PK)
 - `agreement_id` (FK)
 - `payment_number` (1, 2, 3...)
@@ -423,6 +459,7 @@ Actual task assignments
 - `days_late`
 
 #### savings_goals
+
 - `id` (PK)
 - `name`
 - `target_amount`
@@ -438,6 +475,7 @@ Actual task assignments
 - `created_at`
 
 #### savings_contributions
+
 - `id` (PK)
 - `goal_id` (FK)
 - `user_id` (FK)
@@ -446,6 +484,7 @@ Actual task assignments
 - `source` (enum: 'earned_agency', 'cash', 'parent_match')
 
 #### credit_score_events
+
 - `id` (PK)
 - `learner_id` (FK)
 - `date`
@@ -456,6 +495,7 @@ Actual task assignments
 - `notes`
 
 #### payment_events
+
 Actual payments made to credit cards
 
 - `id` (PK)
@@ -466,6 +506,7 @@ Actual payments made to credit cards
 - `cycle_identifier` (string, e.g., "2025-11")
 
 #### notifications
+
 - `id` (PK)
 - `user_id` (FK)
 - `type` (enum: many types)
@@ -584,16 +625,19 @@ Actual payments made to credit cards
 ### Adult Notifications
 
 **Payment Reminders:**
+
 - 3 days before: "Payment 1 due in 3 days - $1,245.67 from John's Salary"
 - Day of: "Don't forget payment 1 today!"
 - 1 day after (if not marked paid): "Did you make your payment?"
 
 **Agency Warnings:**
+
 - At 75%: "You're at 75% of backed agency"
 - At 85%: "⚠️ You're at 85% of backed agency - consider cutting back"
 - At 95%: "🚨 You're at 95% of backed agency - only emergency expenses"
 
 **Learner Activity:**
+
 - "Emma completed 'Clean garage' - Review to approve"
 - "Emma submitted a credit report - Review now"
 - "Emma applied for financing - Approval needed"
@@ -601,21 +645,25 @@ Actual payments made to credit cards
 ### Learner Notifications
 
 **Task Notifications:**
+
 - "New task available: 'Take out trash' - $5"
 - "Task due tomorrow: 'Vacuum living room'"
 - "Task approved! You earned $15. Current balance: $142"
 
 **Agreement Notifications:**
+
 - "Payment due in 3 days - Make sure you have $67.71"
 - "Payment successfully processed - 8 of 12 complete"
 - "⚠️ Insufficient funds for payment - Earn more agency or request extension"
 
 **Credit Score:**
+
 - "Your credit score went up! 745 → 758 (+13)"
 - "Your credit score decreased. 745 → 720 (-25). Review what happened."
 - "New agreement unlocked! You now qualify for Premium Financing"
 
 **Reports:**
+
 - "Time to generate your credit report! Due Nov 12"
 - "Your report was reviewed - check out your parent's feedback"
 
@@ -624,6 +672,7 @@ Actual payments made to credit cards
 ## 🛡️ Security & Privacy
 
 ### Authentication
+
 - JWT tokens with httpOnly cookies
 - Refresh token rotation
 - Bcrypt password hashing (12 rounds)
@@ -631,6 +680,7 @@ Actual payments made to credit cards
 - Rate limiting on login attempts (5 tries, 15-minute lockout)
 
 ### Authorization
+
 - Role-based access control (RBAC)
 - Parents can view all family data
 - Adults can only view their own data
@@ -638,6 +688,7 @@ Actual payments made to credit cards
 - Middleware enforces permissions on every route
 
 ### Data Protection
+
 - HTTPS only (Let's Encrypt SSL)
 - SQL injection prevention (parameterized queries via Knex)
 - XSS prevention (React escapes by default, Content Security Policy headers)
@@ -645,6 +696,7 @@ Actual payments made to credit cards
 - Automated daily backups with encryption at rest
 
 ### Self-Hosted Security
+
 - No external APIs (no third-party breach risk)
 - All data stays on your server
 - Optional 2FA for admin/adult accounts (TOTP)
@@ -655,18 +707,21 @@ Actual payments made to credit cards
 ## 📱 PWA Features
 
 ### Installability
+
 - Manifest file with app icons
 - Service worker for offline functionality
 - Add to home screen prompt
 - Full-screen mode on mobile
 
 ### Offline Capability
+
 - Cache static assets
 - Queue transactions for sync when online
 - Show cached dashboard data
 - "You're offline" indicator
 
 ### Push Notifications
+
 - Web Push API integration
 - User subscribes on first login
 - Notifications for critical events (payment due, task approved, etc.)
@@ -712,8 +767,8 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./certbot/conf:/etc/letsencrypt
@@ -851,25 +906,30 @@ npm run seed:demo
 ### Phase 7+ Ideas
 
 **Investment Simulator:**
+
 - Learners can "invest" saved agency in mock index funds
 - Real market data, but play money
 - Learn about compound interest, risk tolerance
 
 **Allowance Automation:**
+
 - Auto-create recurring task instances
 - Auto-approve if photo proof meets criteria (ML image recognition?)
 
 **Spending Insights:**
+
 - AI-powered spending analysis
 - "You spend 30% more on dining out than the average family"
 - Suggest budget optimizations
 
 **Gamification:**
+
 - Achievements/badges (first loan paid off, 6-month task streak, etc.)
 - Leaderboard (family only, privacy-safe)
 - Seasonal challenges
 
 **Multi-Family Support:**
+
 - Host multiple families on one instance
 - Completely isolated data
 - Family admin creates their own users
@@ -881,19 +941,22 @@ npm run seed:demo
 This project is built for personal use with the intention of eventual open-source release.
 
 **Why build this?**
+
 - Existing finance apps treat kids as afterthoughts (allowance trackers are too simple)
 - Credit education happens too late (after kids already have real credit cards)
 - Parents want to teach financial literacy but lack tools that bridge theory and practice
 - Gamification can make learning engaging without trivializing serious concepts
 
 **What makes this different?**
-- Learners experience *real* financial mechanics (interest, credit scores, loan agreements)
+
+- Learners experience _real_ financial mechanics (interest, credit scores, loan agreements)
 - Parents maintain full oversight while giving kids meaningful autonomy
 - The pain of bad financial decisions is educational, not catastrophic
 - It grows with the family (start young with simple tasks, scale to complex agreements)
 
 **Future Vision:**
 If this proves valuable, release as an open-source project with:
+
 - Easy deployment (Docker one-liner or hosted service)
 - Plug-in architecture for custom task types, agreement terms
 - Community-contributed educational content
@@ -906,6 +969,7 @@ If this proves valuable, release as an open-source project with:
 Built with love for future generations who deserve better financial education than we got.
 
 Special thanks to:
+
 - Every parent trying to teach their kids about money
 - Every kid who asked "why" when told to save
 - The open-source community that made this possible
@@ -930,45 +994,47 @@ This is a personal project currently under active development. Once stable, cont
 ## 📋 Development Roadmap
 
 ### Phase 1: Core Adult System ✅ (Weeks 1-2)
+
 **Goal:** Functional expense tracking for adults with credit-cycle awareness
 
-- [ ] User authentication (JWT, bcrypt)
-  - [ ] Login/logout
-  - [ ] Password reset
-  - [ ] Session management
-- [ ] Multi credit card tracking
-  - [ ] Add/edit/archive cards
-  - [ ] Set cycle dates (start, statement close, due date)
-  - [ ] Track multiple cards with different cycles
-- [ ] Multi income stream tracking
-  - [ ] Add/edit income sources
-  - [ ] Set frequency (weekly, biweekly, monthly)
-  - [ ] Forecast upcoming deposits
+- [x] User authentication (JWT, bcrypt)
+  - [x] Login/logout
+  - [x] Password reset
+  - [x] Session management
+- [x] Multi credit card tracking
+  - [x] Add/edit/archive cards
+  - [x] Set cycle dates (start, statement close, due date)
+  - [x] Track multiple cards with different cycles
+- [x] Multi income stream tracking
+  - [x] Add/edit income sources
+  - [x] Set frequency (weekly, biweekly, monthly)
+  - [x] Forecast upcoming deposits
 - [ ] Transaction management
-  - [ ] Manual entry with category
-  - [ ] Edit/delete transactions
+  - [x] Manual entry with category
+  - [x] Edit/delete transactions
   - [ ] Filter by date, category, card
-- [ ] Agency calculation engine
-  - [ ] Calculate credit agency (limits - spending)
-  - [ ] Calculate backed agency (income - obligations)
-  - [ ] Display both prominently
+- [x] Agency calculation engine
+  - [x] Calculate credit agency (limits - spending)
+  - [x] Calculate backed agency (income - obligations)
+  - [x] Display both prominently
   - [ ] Warning system (75%, 85%, 95% thresholds)
-- [ ] Payment cycle tracking
-  - [ ] Current cycle dashboard
-  - [ ] Days until statement close / due date
-  - [ ] Suggested payment amounts (two-payment strategy)
+- [x] Payment cycle tracking
+  - [x] Current cycle dashboard
+  - [x] Days until statement close / due date
+  - [x] Suggested payment amounts (two-payment strategy)
   - [ ] Mark payments as made
-- [ ] Basic dashboard
-  - [ ] Agency meters (visual indicators)
-  - [ ] Recent transactions
-  - [ ] Upcoming payments
+- [x] Basic dashboard
+  - [x] Agency meters (visual indicators)
+  - [x] Recent transactions
+  - [x] Upcoming payments
   - [ ] Quick-add transaction
 
-**Deliverable:** Adults can track all credit cards and income, see real-time agency, get warnings when overspending
+**Deliverable:** Adults can track all credit cards and income, see real-time agency, and review upcoming obligations in the authenticated frontend shell.
 
 ---
 
 ### Phase 2: Projections & Savings (Week 3)
+
 **Goal:** Forward-looking budget management
 
 - [ ] Projected expenses
@@ -997,6 +1063,7 @@ This is a personal project currently under active development. Once stable, cont
 ---
 
 ### Phase 3: Learner Foundation (Weeks 4-5)
+
 **Goal:** Kids can earn agency through tasks and track spending
 
 - [ ] Learner account setup
@@ -1037,6 +1104,7 @@ This is a personal project currently under active development. Once stable, cont
 ---
 
 ### Phase 4: Agreements & Financing (Weeks 6-7)
+
 **Goal:** Full loan/credit simulation with real consequences
 
 - [ ] Agreement eligibility system
@@ -1078,6 +1146,7 @@ This is a personal project currently under active development. Once stable, cont
 ---
 
 ### Phase 5: Reports & Analytics (Week 8)
+
 **Goal:** Reflection, accountability, and insights
 
 - [ ] Learner credit reports
@@ -1109,6 +1178,7 @@ This is a personal project currently under active development. Once stable, cont
 ---
 
 ### Phase 6: Polish & Deploy (Weeks 9-10)
+
 **Goal:** Production-ready, delightful to use
 
 - [ ] PWA enhancements
@@ -1299,37 +1369,41 @@ class AgencyCalculator {
   async calculateAdultAgency(userId) {
     // Get all credit cards for user
     const cards = await CreditCard.findByUser(userId);
-    
+
     // Get current cycle transactions
     const transactions = await Transaction.getCurrentCycleTransactions(userId);
-    
+
     // Get projected expenses
     const projected = await Transaction.getProjectedExpenses(userId);
-    
+
     // Get income streams
     const income = await IncomeStream.findByUser(userId);
-    
+
     // Get savings commitments
     const savingsCommitments = await SavingsGoal.getMonthlyCommitments(userId);
-    
+
     // Get learner agency owed
     const learnerOwed = await this.calculateLearnerAgencyOwed(userId);
-    
+
     // Calculate credit agency
-    const totalCreditLimit = cards.reduce((sum, card) => sum + card.credit_limit, 0);
+    const totalCreditLimit = cards.reduce(
+      (sum, card) => sum + card.credit_limit,
+      0
+    );
     const currentSpending = transactions
-      .filter(t => !t.is_projected)
+      .filter((t) => !t.is_projected)
       .reduce((sum, t) => sum + t.amount, 0);
     const projectedSpending = projected.reduce((sum, t) => sum + t.amount, 0);
-    const safetyBuffer = totalCreditLimit * 0.10; // 10% buffer
-    
-    const creditAgency = totalCreditLimit - currentSpending - projectedSpending - safetyBuffer;
-    
+    const safetyBuffer = totalCreditLimit * 0.1; // 10% buffer
+
+    const creditAgency =
+      totalCreditLimit - currentSpending - projectedSpending - safetyBuffer;
+
     // Calculate backed agency
     const upcomingIncome = this.calculateUpcomingIncome(income);
-    
+
     const backedAgency = upcomingIncome - savingsCommitments - learnerOwed;
-    
+
     return {
       creditAgency: Math.max(0, creditAgency),
       backedAgency: Math.max(0, backedAgency),
@@ -1340,10 +1414,10 @@ class AgencyCalculator {
       upcomingIncome,
       savingsCommitments,
       learnerOwed,
-      utilizationPercent: (currentSpending / totalCreditLimit) * 100
+      utilizationPercent: (currentSpending / totalCreditLimit) * 100,
     };
   }
-  
+
   /**
    * Calculate total owed to learners
    * This is money parents must account for in their budget
@@ -1351,77 +1425,91 @@ class AgencyCalculator {
   async calculateLearnerAgencyOwed(parentId) {
     // Get all learner children
     const learners = await User.findLearnersByParent(parentId);
-    
+
     let totalOwed = 0;
-    
+
     for (const learner of learners) {
       // Approved tasks not yet paid out
       const approvedTasks = await Task.getApprovedUnpaid(learner.id);
-      const taskOwed = approvedTasks.reduce((sum, t) => sum + t.agency_awarded, 0);
-      
+      const taskOwed = approvedTasks.reduce(
+        (sum, t) => sum + t.agency_awarded,
+        0
+      );
+
       // Active agreements - parent fronted full amount, minus payments learner has made
       const agreements = await Agreement.getActive(learner.id);
       for (const agreement of agreements) {
         // Parent paid: principal amount
         // Minus: payments learner has already made back
-        const payments = await AgreementPayment.getPaidByAgreement(agreement.id);
+        const payments = await AgreementPayment.getPaidByAgreement(
+          agreement.id
+        );
         const paidBack = payments.reduce((sum, p) => sum + p.amount_paid, 0);
-        totalOwed += (agreement.principal_amount - paidBack);
+        totalOwed += agreement.principal_amount - paidBack;
       }
-      
+
       totalOwed += taskOwed;
     }
-    
+
     return totalOwed;
   }
-  
+
   /**
    * Calculate expected income before next payment due date
    */
   calculateUpcomingIncome(incomeStreams) {
     const now = new Date();
     const nextPaymentDue = this.getNextPaymentDueDate(); // 21 days from statement close typically
-    
+
     let upcomingIncome = 0;
-    
+
     for (const stream of incomeStreams) {
       // Count deposits that will occur between now and payment due
       const depositsCount = this.countDepositsBetween(
-        stream.frequency, 
+        stream.frequency,
         stream.next_deposit_date,
         now,
         nextPaymentDue
       );
-      
+
       upcomingIncome += stream.amount * depositsCount;
     }
-    
+
     return upcomingIncome;
   }
-  
+
   /**
    * Calculate available agency for a learner
    */
   async calculateLearnerAgency(learnerId) {
     const profile = await LearnerCreditProfile.findByLearnerId(learnerId);
-    
+
     // Get earned agency from approved tasks
     const approvedTasks = await Task.getApprovedUnpaid(learnerId);
-    const earnedAgency = approvedTasks.reduce((sum, t) => sum + t.agency_awarded, 0);
-    
+    const earnedAgency = approvedTasks.reduce(
+      (sum, t) => sum + t.agency_awarded,
+      0
+    );
+
     // Get current cycle spending
-    const transactions = await Transaction.getCurrentCycleTransactions(learnerId);
+    const transactions =
+      await Transaction.getCurrentCycleTransactions(learnerId);
     const currentSpending = transactions.reduce((sum, t) => sum + t.amount, 0);
-    
+
     // Get upcoming agreement payments
     const upcomingPayments = await AgreementPayment.getUpcoming(learnerId);
-    const paymentObligations = upcomingPayments.reduce((sum, p) => sum + p.amount_due, 0);
-    
+    const paymentObligations = upcomingPayments.reduce(
+      (sum, p) => sum + p.amount_due,
+      0
+    );
+
     // Get savings commitments
-    const savingsCommitments = await SavingsGoal.getLearnerCommitments(learnerId);
-    
-    const availableAgency = earnedAgency - currentSpending - paymentObligations - savingsCommitments;
-    
+    const savingsCommitments =
+      await SavingsGoal.getLearnerCommitments(learnerId);
+
+    const availableAgency =
+      earnedAgency - currentSpending - paymentObligations - savingsCommitments;
+
     return {
       earnedAgency,
       currentSpending,
@@ -1429,7 +1517,8 @@ class AgencyCalculator {
       paymentObligations,
       savingsCommitments,
       perCycleLimit: profile.per_cycle_spending_limit,
-      utilizationPercent: (currentSpending / profile.per_cycle_spending_limit) * 100
+      utilizationPercent:
+        (currentSpending / profile.per_cycle_spending_limit) * 100,
     };
   }
 }
@@ -1449,122 +1538,136 @@ class CreditScoreCalculator {
    */
   async calculateScore(learnerId) {
     const profile = await LearnerCreditProfile.findByLearnerId(learnerId);
-    
+
     let score = 650; // Base score
-    
+
     // 1. Payment History (35% weight, +/- 175 points max)
     const paymentScore = await this.calculatePaymentHistoryScore(learnerId);
     score += paymentScore;
-    
+
     // 2. Credit Utilization (30% weight, +/- 150 points max)
     const utilizationScore = await this.calculateUtilizationScore(learnerId);
     score += utilizationScore;
-    
+
     // 3. Length of Credit History (15% weight, +/- 75 points max)
-    const historyScore = this.calculateHistoryLengthScore(profile.account_open_date);
+    const historyScore = this.calculateHistoryLengthScore(
+      profile.account_open_date
+    );
     score += historyScore;
-    
+
     // 4. Task Completion Rate (10% weight, +/- 50 points max)
     const taskScore = this.calculateTaskScore(profile);
     score += taskScore;
-    
+
     // 5. Parental Feedback (10% weight, +/- 50 points max)
     const feedbackScore = await this.calculateFeedbackScore(learnerId);
     score += feedbackScore;
-    
+
     // 6. Manual adjustments from parent
-    const manualAdjustments = await CreditScoreEvent.getManualAdjustments(learnerId);
-    const manualTotal = manualAdjustments.reduce((sum, e) => sum + e.impact_points, 0);
+    const manualAdjustments =
+      await CreditScoreEvent.getManualAdjustments(learnerId);
+    const manualTotal = manualAdjustments.reduce(
+      (sum, e) => sum + e.impact_points,
+      0
+    );
     score += manualTotal;
-    
+
     // Clamp to valid range
     score = Math.max(350, Math.min(900, Math.round(score)));
-    
+
     return score;
   }
-  
+
   async calculatePaymentHistoryScore(learnerId) {
     // Get credit reports submitted
     const reports = await CreditReport.findByLearner(learnerId);
-    
+
     if (reports.length === 0) return 0; // Neutral for new accounts
-    
-    const onTimeCount = reports.filter(r => r.submitted_on_time).length;
+
+    const onTimeCount = reports.filter((r) => r.submitted_on_time).length;
     const totalCount = reports.length;
     const onTimeRate = onTimeCount / totalCount;
-    
+
     // 100% on-time = +175, 75% = 0 (neutral), <75% = negative
     const score = ((onTimeRate - 0.75) / 0.25) * 175;
-    
+
     // Also factor in agreement payments
     const agreementPayments = await AgreementPayment.findByLearner(learnerId);
     if (agreementPayments.length > 0) {
-      const paidOnTime = agreementPayments.filter(p => p.status === 'paid' && p.days_late === 0).length;
+      const paidOnTime = agreementPayments.filter(
+        (p) => p.status === 'paid' && p.days_late === 0
+      ).length;
       const agreementOnTimeRate = paidOnTime / agreementPayments.length;
-      
+
       // Weight reports 60%, agreements 40%
-      const combinedScore = (score * 0.6) + (((agreementOnTimeRate - 0.75) / 0.25) * 175 * 0.4);
+      const combinedScore =
+        score * 0.6 + ((agreementOnTimeRate - 0.75) / 0.25) * 175 * 0.4;
       return Math.max(-175, Math.min(175, combinedScore));
     }
-    
+
     return Math.max(-175, Math.min(175, score));
   }
-  
+
   async calculateUtilizationScore(learnerId) {
     const profile = await LearnerCreditProfile.findByLearnerId(learnerId);
     const agency = await AgencyCalculator.calculateLearnerAgency(learnerId);
-    
+
     const utilizationPercent = agency.utilizationPercent / 100;
-    
+
     // <30% utilization = excellent (+150)
     // 30-50% = good (+75)
     // 50-70% = neutral (0)
     // >70% = poor (negative, worsens exponentially)
-    
-    if (utilizationPercent < 0.30) return 150;
-    if (utilizationPercent < 0.50) return 75;
-    if (utilizationPercent < 0.70) return 0;
-    
+
+    if (utilizationPercent < 0.3) return 150;
+    if (utilizationPercent < 0.5) return 75;
+    if (utilizationPercent < 0.7) return 0;
+
     // Above 70%, score drops quickly
-    const excessUtilization = utilizationPercent - 0.70;
+    const excessUtilization = utilizationPercent - 0.7;
     return Math.max(-150, -(excessUtilization * 500));
   }
-  
+
   calculateHistoryLengthScore(accountOpenDate) {
     const now = new Date();
-    const daysSinceOpen = (now - new Date(accountOpenDate)) / (1000 * 60 * 60 * 24);
+    const daysSinceOpen =
+      (now - new Date(accountOpenDate)) / (1000 * 60 * 60 * 24);
     const yearsSinceOpen = daysSinceOpen / 365;
-    
+
     // Max out at 5 years = +75 points
     // Linear growth: +15 points per year
     return Math.min(75, yearsSinceOpen * 15);
   }
-  
+
   calculateTaskScore(profile) {
     if (profile.total_tasks_assigned === 0) return 0; // Neutral for new accounts
-    
-    const completionRate = profile.total_tasks_completed / profile.total_tasks_assigned;
-    
+
+    const completionRate =
+      profile.total_tasks_completed / profile.total_tasks_assigned;
+
     // 80% completion = neutral (0)
     // 100% = +50
     // <80% = negative
-    return ((completionRate - 0.80) / 0.20) * 50;
+    return ((completionRate - 0.8) / 0.2) * 50;
   }
-  
+
   async calculateFeedbackScore(learnerId) {
     const tasks = await Task.findCompletedByLearner(learnerId);
-    
+
     if (tasks.length === 0) return 0;
-    
-    const totalRating = tasks.reduce((sum, t) => sum + (t.quality_rating || 3), 0);
+
+    const totalRating = tasks.reduce(
+      (sum, t) => sum + (t.quality_rating || 3),
+      0
+    );
     const avgRating = totalRating / tasks.length;
-    
+
     // 3/5 stars = neutral (0)
     // 5/5 = +50
     // 1/5 = -50
     return ((avgRating - 3) / 2) * 50;
   }
-  
+
   /**
    * Log a score change event
    */
@@ -1576,7 +1679,7 @@ class CreditScoreCalculator {
       new_score: newScore,
       reason,
       impact_points: newScore - oldScore,
-      notes
+      notes,
     });
   }
 }
@@ -1593,6 +1696,7 @@ module.exports = new CreditScoreCalculator();
 Adults want to see the numbers. Don't hide information behind clicks.
 
 **Dashboard principles:**
+
 - Show agency prominently with both credit and backed values
 - Use color coding: Green (>50% agency), Yellow (25-50%), Red (<25%)
 - Display cycle countdown at all times
@@ -1600,6 +1704,7 @@ Adults want to see the numbers. Don't hide information behind clicks.
 - Quick-add transaction always accessible (floating button or top bar)
 
 **Transaction entry:**
+
 - Form should be fast: amount, category dropdown, date (defaults to today), optional notes
 - Show impact on agency in real-time as they type amount
 - Warning modal only triggers if threshold breached
@@ -1610,6 +1715,7 @@ Adults want to see the numbers. Don't hide information behind clicks.
 Kids need visual feedback and gamification, but not patronizing.
 
 **Dashboard principles:**
+
 - Big, bold numbers for available agency
 - Credit score displayed prominently with badge (Poor/Fair/Good/Very Good/Excellent)
 - Task board should feel like quest log (game design inspiration)
@@ -1617,6 +1723,7 @@ Kids need visual feedback and gamification, but not patronizing.
 - Celebrate wins (confetti animation when loan paid off, level-up sound for score increase)
 
 **Color psychology:**
+
 - Green: Positive (earned money, good score, paid on time)
 - Blue: Informational (neutral facts, upcoming events)
 - Yellow/Orange: Warning (approaching limit, task due soon)
@@ -1637,6 +1744,7 @@ Kids need visual feedback and gamification, but not patronizing.
 ## 🔐 Data Privacy & Ethics
 
 ### What We Track
+
 - Financial transactions (amounts, categories, dates)
 - Task completion and work quality
 - Credit scores and history
@@ -1644,12 +1752,14 @@ Kids need visual feedback and gamification, but not patronizing.
 - User behavior (login times, feature usage - for improving UX only)
 
 ### What We DON'T Track
+
 - Browsing history
 - Location data (beyond timezone for date calculations)
 - Biometric data
 - Third-party integrations (no selling data, no ads, no analytics services)
 
 ### Data Ownership
+
 - Parents own all family data
 - Data export available anytime (JSON, CSV)
 - Account deletion removes all PII permanently
@@ -1658,6 +1768,7 @@ Kids need visual feedback and gamification, but not patronizing.
 ### Ethical Considerations
 
 **For Learners:**
+
 - System is educational, not punitive
 - Scores and penalties are learning opportunities, not permanent records
 - Parents can forgive loans/adjust scores with explanation
@@ -1665,6 +1776,7 @@ Kids need visual feedback and gamification, but not patronizing.
 - Privacy from siblings (learners can't see each other's full data, only leaderboard if enabled)
 
 **For Parents:**
+
 - Tool assists decision-making, never replaces parenting judgment
 - Override mechanisms exist for all automated actions
 - Transparency: kids can see why their score changed
@@ -1675,6 +1787,7 @@ Kids need visual feedback and gamification, but not patronizing.
 ## 🐛 Known Limitations & Future Considerations
 
 ### Current Limitations
+
 - Single family per deployment (multi-tenancy planned for Phase 7+)
 - Canadian financial system only (USD/other regions could be added)
 - Manual transaction entry only (no bank API integrations by design)
@@ -1682,12 +1795,14 @@ Kids need visual feedback and gamification, but not patronizing.
 - No mobile apps (PWA only - may build native later if demand)
 
 ### Deliberate Design Choices
+
 - **No gamification of spending:** We don't reward spending more, only managing well
 - **No social features:** This is family-private by design
 - **No external integrations:** Keeps it simple, secure, and privacy-focused
 - **No "AI advisor":** Financial decisions should be human, not algorithmic
 
 ### Edge Cases to Handle
+
 - What if learner earns more than parent can pay? (Cap task approvals or delay payouts)
 - What if kid wants to cancel an agreement? (Penalty fee, score hit, educational discussion)
 - What if parent forgets to approve tasks for weeks? (Auto-reminder, eventual auto-approval with notice)
@@ -1698,6 +1813,7 @@ Kids need visual feedback and gamification, but not patronizing.
 ## 📚 Educational Resources (Bundled Content Ideas)
 
 ### For Parents (Help Section)
+
 - "How to set appropriate spending limits for different ages"
 - "When to approve vs. deny loan applications"
 - "Teaching compound interest through savings goals"
@@ -1705,6 +1821,7 @@ Kids need visual feedback and gamification, but not patronizing.
 - "What to do when they miss a payment (teachable moments)"
 
 ### For Learners (Interactive Modules)
+
 - "What is credit and why does it matter?"
 - "Interest: How it works and why it costs you"
 - "Building a budget that actually works"
@@ -1712,6 +1829,7 @@ Kids need visual feedback and gamification, but not patronizing.
 - "The power of compound growth (savings goals)"
 
 ### Quiz / Certification System (Optional)
+
 - Before unlocking high-tier agreements, require passing a financial literacy quiz
 - "Loan Basics Certification" - must score 80%+ to apply for Elite Financing
 - Parents can require certifications for any tier
@@ -1723,6 +1841,7 @@ Kids need visual feedback and gamification, but not patronizing.
 ### Interest & Amortization
 
 **Simple Interest (Used for Learner Agreements):**
+
 ```
 Total Interest = Principal × Rate × Time
 Monthly Payment = (Principal + Total Interest) / Number of Months
@@ -1737,6 +1856,7 @@ Monthly Payment = $858.50 / 12 = $71.54
 Educational simplicity. Kids can understand "I borrowed $850, I'll pay back $858.50, that's $8.50 extra for borrowing."
 
 **Compound Interest (Used for Savings Goals):**
+
 ```
 Future Value = Principal × (1 + Rate)^Time
 
@@ -1773,12 +1893,14 @@ Unsustainable: > 50%
 ### Transaction Warning Thresholds
 
 **Adult Transactions:**
+
 - **75% backed agency** = Yellow indicator, no interruption
 - **85% backed agency** = Orange warning tooltip on submit
 - **95% backed agency** = Red modal with required explanation
 - **>100% backed agency** = Hard block, must adjust projected expenses or add income
 
 **Learner Transactions:**
+
 - **75% cycle limit** = Yellow indicator
 - **90% cycle limit** = Orange warning, suggest saving
 - **100% cycle limit** = Soft block, requires parent approval to exceed (teaching moment)
@@ -1787,6 +1909,7 @@ Unsustainable: > 50%
 ### Credit Score Change Triggers
 
 **Automatic Score Changes:**
+
 - Report submitted on time: +10 points
 - Report submitted 1-3 days late: -5 points
 - Report submitted 4-7 days late: -15 points
@@ -1801,6 +1924,7 @@ Unsustainable: > 50%
 - Low utilization (<20%) at cycle end: +10 points
 
 **Manual Adjustments (Parent):**
+
 - Exceptional work: +5 to +25 points
 - Irresponsible behavior: -5 to -25 points
 - Must include reason (logged and visible to learner)
@@ -1810,42 +1934,42 @@ Unsustainable: > 50%
 ```javascript
 function canApproveAgreement(learner, agreement) {
   const checks = [];
-  
+
   // 1. Credit score sufficient for agreement type
   const eligible = getEligibleAgreementTypes(learner.credit_score);
   checks.push({
     name: 'Credit Score',
     pass: eligible.includes(agreement.type),
-    message: `Score ${learner.credit_score} ${eligible.includes(agreement.type) ? 'qualifies' : 'does not qualify'}`
+    message: `Score ${learner.credit_score} ${eligible.includes(agreement.type) ? 'qualifies' : 'does not qualify'}`,
   });
-  
+
   // 2. Down payment covered by current agency
   checks.push({
     name: 'Down Payment',
     pass: learner.available_agency >= agreement.down_payment,
-    message: `Has ${learner.available_agency}, needs ${agreement.down_payment}`
+    message: `Has ${learner.available_agency}, needs ${agreement.down_payment}`,
   });
-  
+
   // 3. Monthly payment affordable (based on average earnings)
   const avgMonthlyEarnings = calculateAverageMonthlyEarnings(learner.id);
   const affordabilityRatio = agreement.monthly_payment / avgMonthlyEarnings;
   checks.push({
     name: 'Payment Affordability',
-    pass: affordabilityRatio <= 0.50, // Don't let payment exceed 50% of typical earnings
-    message: `Payment is ${(affordabilityRatio * 100).toFixed(0)}% of average earnings`
+    pass: affordabilityRatio <= 0.5, // Don't let payment exceed 50% of typical earnings
+    message: `Payment is ${(affordabilityRatio * 100).toFixed(0)}% of average earnings`,
   });
-  
+
   // 4. No existing defaulted agreements
   const hasDefaults = hasDefaultedAgreements(learner.id);
   checks.push({
     name: 'Payment History',
     pass: !hasDefaults,
-    message: hasDefaults ? 'Has defaulted agreements' : 'Clean payment history'
+    message: hasDefaults ? 'Has defaulted agreements' : 'Clean payment history',
   });
-  
+
   return {
-    canApprove: checks.every(c => c.pass),
-    checks
+    canApprove: checks.every((c) => c.pass),
+    checks,
   };
 }
 ```
@@ -1857,13 +1981,13 @@ function shouldAutoApprove(task) {
   // Auto-approve if:
   // 1. Task has no proof requirements, OR
   // 2. Task is under $10 AND learner has 95%+ completion rate AND 750+ score
-  
+
   const profile = getLearnerProfile(task.learner_id);
-  
+
   if (!task.requires_photo_proof && !task.requires_description_proof) {
     return { autoApprove: true, reason: 'No proof required' };
   }
-  
+
   if (
     task.agency_value <= 10 &&
     profile.completion_rate >= 0.95 &&
@@ -1871,7 +1995,7 @@ function shouldAutoApprove(task) {
   ) {
     return { autoApprove: true, reason: 'Trusted learner, low-value task' };
   }
-  
+
   return { autoApprove: false, reason: 'Manual review required' };
 }
 ```
@@ -1884,26 +2008,26 @@ function handleGoalAbandonment(goal, explanation) {
   if (goal.current_amount / goal.target_amount > 0.25 && !explanation) {
     throw new Error('Explanation required for abandoning a funded goal');
   }
-  
+
   // Present options for funds:
   const options = [
-    { 
-      id: 'refund', 
+    {
+      id: 'refund',
       label: 'Return to available agency',
-      description: 'Money becomes available to spend again'
+      description: 'Money becomes available to spend again',
     },
-    { 
-      id: 'transfer', 
+    {
+      id: 'transfer',
       label: 'Transfer to another goal',
-      description: 'Move savings to a different goal'
+      description: 'Move savings to a different goal',
     },
-    { 
-      id: 'donate', 
+    {
+      id: 'donate',
       label: 'Donate to family fund',
-      description: 'Contribute to family savings or another family goal'
-    }
+      description: 'Contribute to family savings or another family goal',
+    },
   ];
-  
+
   return options;
 }
 ```
@@ -1952,22 +2076,23 @@ CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read, cr
 ### Daily Jobs
 
 **midnight (00:00):**
+
 ```javascript
 // Check for due reports
 async function checkDueReports() {
   const learners = await User.findAllLearners();
-  
+
   for (const learner of learners) {
     const lastReport = await CreditReport.getLatest(learner.id);
     const cycleEndDate = calculateCycleEnd();
-    
+
     if (isToday(cycleEndDate) && !lastReport?.submitted) {
       // Send notification
       await Notification.create({
         user_id: learner.id,
         type: 'report_due',
         title: 'Credit Report Due Today',
-        body: 'Time to generate your credit report for this cycle!'
+        body: 'Time to generate your credit report for this cycle!',
       });
     }
   }
@@ -1976,15 +2101,15 @@ async function checkDueReports() {
 // Check for overdue reports (score penalty)
 async function penalizeOverdueReports() {
   const overdueReports = await CreditReport.findOverdue();
-  
+
   for (const report of overdueReports) {
     const daysOverdue = calculateDaysOverdue(report.due_date);
     let penalty = 0;
-    
+
     if (daysOverdue <= 3) penalty = -5;
     else if (daysOverdue <= 7) penalty = -15;
     else penalty = -30;
-    
+
     await CreditScoreCalculator.adjustScore(
       report.learner_id,
       penalty,
@@ -1997,10 +2122,12 @@ async function penalizeOverdueReports() {
 // Auto-deduct agreement payments
 async function processAgreementPayments() {
   const duePayments = await AgreementPayment.getDueToday();
-  
+
   for (const payment of duePayments) {
-    const learner = await AgencyCalculator.calculateLearnerAgency(payment.learner_id);
-    
+    const learner = await AgencyCalculator.calculateLearnerAgency(
+      payment.learner_id
+    );
+
     if (learner.availableAgency >= payment.amount_due) {
       // Sufficient funds
       await AgreementPayment.markPaid(payment.id, payment.amount_due);
@@ -2010,10 +2137,9 @@ async function processAgreementPayments() {
         'on_time_payment',
         `Agreement payment #${payment.payment_number} paid on time`
       );
-      
+
       // Reduce parent's "Learner Agency Owed"
       await ParentLedger.reduceOwed(payment.learner_id, payment.amount_due);
-      
     } else {
       // Insufficient funds - late payment
       await AgreementPayment.markLate(payment.id);
@@ -2023,13 +2149,13 @@ async function processAgreementPayments() {
         'missed_payment',
         `Insufficient funds for payment #${payment.payment_number}`
       );
-      
+
       // Notify learner and parent
       await Notification.create({
         user_id: payment.learner_id,
         type: 'payment_missed',
         title: '⚠️ Payment Missed',
-        body: `You didn't have enough agency for your ${payment.amount_due} payment. Late fee applied.`
+        body: `You didn't have enough agency for your ${payment.amount_due} payment. Late fee applied.`,
       });
     }
   }
@@ -2037,6 +2163,7 @@ async function processAgreementPayments() {
 ```
 
 **08:00 AM:**
+
 ```javascript
 // Morning reminders
 async function sendMorningReminders() {
@@ -2047,10 +2174,10 @@ async function sendMorningReminders() {
       user_id: payment.user_id,
       type: 'payment_reminder',
       title: 'Payment Due Soon',
-      body: `Credit card payment of ${payment.amount} due in 3 days`
+      body: `Credit card payment of ${payment.amount} due in 3 days`,
     });
   }
-  
+
   // Tasks due soon
   const dueTasks = await Task.getDueSoon(24); // Next 24 hours
   for (const task of dueTasks) {
@@ -2058,7 +2185,7 @@ async function sendMorningReminders() {
       user_id: task.learner_id,
       type: 'task_due',
       title: 'Task Due Soon',
-      body: `"${task.title}" is due in ${task.hours_remaining} hours!`
+      body: `"${task.title}" is due in ${task.hours_remaining} hours!`,
     });
   }
 }
@@ -2067,13 +2194,14 @@ async function sendMorningReminders() {
 ### Weekly Jobs
 
 **Sunday 20:00 (Week Planning):**
+
 ```javascript
 async function weeklyDigest() {
   const families = await User.findAllAdmins();
-  
+
   for (const admin of families) {
     const stats = await generateWeeklyStats(admin.id);
-    
+
     // Email digest
     await Email.send({
       to: admin.email,
@@ -2084,8 +2212,8 @@ async function weeklyDigest() {
         topCategories: stats.topCategories,
         learnerHighlights: stats.learnerHighlights,
         upcomingPayments: stats.upcomingPayments,
-        savingsProgress: stats.savingsProgress
-      }
+        savingsProgress: stats.savingsProgress,
+      },
     });
   }
 }
@@ -2094,6 +2222,7 @@ async function weeklyDigest() {
 ### Monthly Jobs
 
 **1st of month, 01:00:**
+
 ```javascript
 async function monthlyRollover() {
   // Recalculate all credit scores
@@ -2101,7 +2230,7 @@ async function monthlyRollover() {
   for (const learner of learners) {
     const newScore = await CreditScoreCalculator.calculateScore(learner.id);
     const oldScore = learner.credit_profile.current_score;
-    
+
     if (newScore !== oldScore) {
       await CreditScoreCalculator.updateScore(learner.id, newScore);
       await CreditScoreCalculator.logScoreChange(
@@ -2113,7 +2242,7 @@ async function monthlyRollover() {
       );
     }
   }
-  
+
   // Archive last month's data
   await ArchiveService.archivePreviousMonth();
 }
@@ -2126,6 +2255,7 @@ async function monthlyRollover() {
 ### Unit Tests (Backend)
 
 **Core Services:**
+
 ```javascript
 // tests/services/agencyCalculator.test.js
 describe('AgencyCalculator', () => {
@@ -2134,22 +2264,24 @@ describe('AgencyCalculator', () => {
       // Setup: User with $10k credit limit, $3k spent
       const userId = await createTestUser({ creditLimit: 10000 });
       await createTestTransaction({ userId, amount: 3000 });
-      
+
       const result = await AgencyCalculator.calculateAdultAgency(userId);
-      
+
       // Expected: 10000 - 3000 - 1000 (10% buffer) = 6000
       expect(result.creditAgency).toBe(6000);
     });
-    
+
     it('should account for learner agency owed', async () => {
       const parentId = await createTestUser();
       const learnerId = await createTestLearner({ parentId });
       await approveTestTask({ learnerId, amount: 50 });
-      
+
       const result = await AgencyCalculator.calculateAdultAgency(parentId);
-      
+
       expect(result.learnerOwed).toBe(50);
-      expect(result.backedAgency).toBeLessThanOrEqual(result.upcomingIncome - 50);
+      expect(result.backedAgency).toBeLessThanOrEqual(
+        result.upcomingIncome - 50
+      );
     });
   });
 });
@@ -2162,19 +2294,19 @@ describe('CreditScoreCalculator', () => {
       const score = await CreditScoreCalculator.calculateScore(learnerId);
       expect(score).toBe(650);
     });
-    
+
     it('should increase score for on-time reports', async () => {
       const learnerId = await createTestLearner();
       await submitTestReport({ learnerId, onTime: true });
-      
+
       const score = await CreditScoreCalculator.calculateScore(learnerId);
       expect(score).toBeGreaterThan(650);
     });
-    
+
     it('should decrease score for high utilization', async () => {
       const learnerId = await createTestLearner({ cycleLimit: 100 });
       await createTestTransaction({ userId: learnerId, amount: 85 }); // 85% utilization
-      
+
       const score = await CreditScoreCalculator.calculateScore(learnerId);
       expect(score).toBeLessThan(650);
     });
@@ -2190,23 +2322,23 @@ describe('POST /api/agreements/apply', () => {
   it('should reject application if credit score too low', async () => {
     const learner = await createTestLearner({ score: 550 });
     const token = generateTestToken(learner);
-    
+
     const response = await request(app)
       .post('/api/agreements/apply')
       .set('Authorization', `Bearer ${token}`)
       .send({
         type: 'premium_financing',
-        amount: 500
+        amount: 500,
       });
-    
+
     expect(response.status).toBe(403);
     expect(response.body.error).toContain('credit score');
   });
-  
+
   it('should create pending agreement if eligible', async () => {
     const learner = await createTestLearner({ score: 750, agency: 200 });
     const token = generateTestToken(learner);
-    
+
     const response = await request(app)
       .post('/api/agreements/apply')
       .set('Authorization', `Bearer ${token}`)
@@ -2214,9 +2346,10 @@ describe('POST /api/agreements/apply', () => {
         type: 'premium_financing',
         amount: 500,
         purpose: 'Gaming PC',
-        justification: 'I need this for video editing and school projects. I will make payments from my weekly task earnings.'
+        justification:
+          'I need this for video editing and school projects. I will make payments from my weekly task earnings.',
       });
-    
+
     expect(response.status).toBe(201);
     expect(response.body.agreement.status).toBe('pending');
   });
@@ -2234,32 +2367,32 @@ describe('Learner Task Flow', () => {
     await parent.createTask({
       title: 'Clean garage',
       value: 15,
-      requiresPhoto: true
+      requiresPhoto: true,
     });
-    
+
     // 2. Learner sees task
     const learner = await loginAsLearner();
     const tasks = await learner.getAvailableTasks();
     expect(tasks).toHaveLength(1);
     expect(tasks[0].title).toBe('Clean garage');
-    
+
     // 3. Learner completes task
     await learner.completeTask(tasks[0].id, {
-      photo: 'base64encodedimage'
+      photo: 'base64encodedimage',
     });
-    
+
     // 4. Parent approves
     const pendingApprovals = await parent.getPendingApprovals();
     expect(pendingApprovals).toHaveLength(1);
     await parent.approveTask(pendingApprovals[0].id, {
       rating: 5,
-      feedback: 'Great job!'
+      feedback: 'Great job!',
     });
-    
+
     // 5. Learner receives agency
     const agency = await learner.getAvailableAgency();
     expect(agency.earnedAgency).toBe(15);
-    
+
     // 6. Parent agency reduced
     const parentAgency = await parent.getAvailableAgency();
     expect(parentAgency.learnerOwed).toBe(15);
@@ -2275,15 +2408,15 @@ describe('Learner Task Flow', () => {
 describe('Concurrent Usage', () => {
   it('should handle family of 6 without performance degradation', async () => {
     const users = await createTestFamily(6); // 2 adults, 4 learners
-    
-    const promises = users.map(user => 
+
+    const promises = users.map(user =>
       simulateTypicalUsage(user, duration: 60000) // 1 minute of activity
     );
-    
+
     const startTime = Date.now();
     await Promise.all(promises);
     const endTime = Date.now();
-    
+
     // Average response time should be <500ms
     const avgResponseTime = (endTime - startTime) / promises.length;
     expect(avgResponseTime).toBeLessThan(500);
@@ -2298,6 +2431,7 @@ describe('Concurrent Usage', () => {
 ### Authentication Endpoints
 
 **POST /api/auth/login**
+
 ```json
 Request:
 {
@@ -2319,6 +2453,7 @@ Response (200):
 ```
 
 **POST /api/auth/refresh**
+
 ```json
 Request:
 {
@@ -2334,6 +2469,7 @@ Response (200):
 ### Agency Endpoints
 
 **GET /api/agency/current**
+
 ```json
 Response (200):
 {
@@ -2354,6 +2490,7 @@ Response (200):
 ### Transaction Endpoints
 
 **POST /api/transactions**
+
 ```json
 Request:
 {
@@ -2387,6 +2524,7 @@ Response (201):
 ### Task Endpoints
 
 **GET /api/tasks/available** (Learner)
+
 ```json
 Response (200):
 {
@@ -2405,6 +2543,7 @@ Response (200):
 ```
 
 **POST /api/tasks/:id/complete** (Learner)
+
 ```json
 Request:
 {
@@ -2424,6 +2563,7 @@ Response (200):
 ```
 
 **POST /api/tasks/:id/approve** (Parent)
+
 ```json
 Request:
 {
@@ -2457,6 +2597,7 @@ Response (200):
 ### Agreement Endpoints
 
 **GET /api/agreements/eligible** (Learner)
+
 ```json
 Response (200):
 {
@@ -2487,6 +2628,7 @@ Response (200):
 ```
 
 **POST /api/agreements/apply** (Learner)
+
 ```json
 Request:
 {
@@ -2514,6 +2656,7 @@ Response (201):
 ```
 
 **POST /api/agreements/:id/approve** (Parent)
+
 ```json
 Request:
 {
@@ -2547,6 +2690,7 @@ Response (200):
 ### Age-Appropriate Implementation
 
 **Ages 6-8: Task Basics**
+
 - Simple one-time tasks only
 - Visual task cards with pictures
 - Immediate gratification (spend earned agency same day)
@@ -2554,6 +2698,7 @@ Response (200):
 - Parent approves every transaction
 
 **Ages 9-12: Credit Introduction**
+
 - Introduce credit score concept
 - Simple recurring tasks
 - Per-cycle limits enforced
@@ -2562,6 +2707,7 @@ Response (200):
 - Required monthly "reports" (simple: what I learned)
 
 **Ages 13-15: Credit Building**
+
 - Full credit score system active
 - Complex tasks and recurring responsibilities
 - Larger financing available based on score
@@ -2570,6 +2716,7 @@ Response (200):
 - Detailed monthly reports required
 
 **Ages 16-18: Real-World Simulation**
+
 - Highest tier agreements available
 - Can take on larger projects (lemonade stand → online business)
 - Line of credit option

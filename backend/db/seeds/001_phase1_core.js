@@ -14,9 +14,24 @@ exports.seed = async function seed(knex) {
   await knex('roles').del();
 
   const roles = [
-    { id: 1, code: 'admin', name: 'Administrator', description: 'Full platform access' },
-    { id: 2, code: 'adult', name: 'Adult', description: 'Parent or guardian account' },
-    { id: 3, code: 'learner', name: 'Learner', description: 'Child account with guided access' },
+    {
+      id: 1,
+      code: 'admin',
+      name: 'Administrator',
+      description: 'Full platform access',
+    },
+    {
+      id: 2,
+      code: 'adult',
+      name: 'Adult',
+      description: 'Parent or guardian account',
+    },
+    {
+      id: 3,
+      code: 'learner',
+      name: 'Learner',
+      description: 'Child account with guided access',
+    },
   ];
 
   await knex('roles').insert(
@@ -245,21 +260,21 @@ exports.seed = async function seed(knex) {
       id: '02b321d5-8f09-48c4-a612-e9ed409fb8f5',
       user_id: users[1].id,
       calculated_for: '2025-11-01',
-      credit_agency_cents: toCents(7370.25),
-      backed_agency_cents: toCents(5200),
-      available_credit_cents: toCents(7340),
-      projected_obligations_cents: toCents(1880.42),
-      notes: 'Opening snapshot for November cycle',
+      credit_agency_cents: toCents(6859.25),
+      backed_agency_cents: toCents(7152.19),
+      available_credit_cents: toCents(7359.25),
+      projected_obligations_cents: toCents(347.81),
+      notes: 'Calculated from seeded Phase 1 data on November 1',
     },
     {
       id: '3de8e5ab-54f9-4bb3-8d64-a157dcd51430',
       user_id: users[2].id,
       calculated_for: '2025-11-01',
-      credit_agency_cents: toCents(10205.67),
-      backed_agency_cents: toCents(6450),
-      available_credit_cents: toCents(8500),
-      projected_obligations_cents: toCents(2440.5),
-      notes: 'Projected balances before holiday travel',
+      credit_agency_cents: toCents(12404.1),
+      backed_agency_cents: toCents(5207.7),
+      available_credit_cents: toCents(13154.1),
+      projected_obligations_cents: toCents(92.3),
+      notes: 'Calculated from seeded Phase 1 data on November 1',
     },
   ];
 

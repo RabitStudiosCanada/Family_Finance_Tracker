@@ -1,34 +1,65 @@
-const features = [
-  'Express API with Jest testing harness',
-  'React + Vite frontend configured with Tailwind CSS',
-  'Shared linting, formatting, and commit hooks'
-];
+import { useCallback, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
+import AppLayout from './components/AppLayout.jsx';
+import FullScreenLoader from './components/FullScreenLoader.jsx';
+import { useAuth } from './providers/AuthProvider.jsx';
+import CreditCardsPage from './pages/CreditCardsPage.jsx';
+import IncomeStreamsPage from './pages/IncomeStreamsPage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import OverviewPage from './pages/OverviewPage.jsx';
+import PaymentCyclesPage from './pages/PaymentCyclesPage.jsx';
+import TransactionsPage from './pages/TransactionsPage.jsx';
+import useHashRoute from './hooks/useHashRoute.js';
+
+const ROUTES = {
+  overview: OverviewPage,
+  'credit-cards': CreditCardsPage,
+  'income-streams': IncomeStreamsPage,
+  transactions: TransactionsPage,
+  'payment-cycles': PaymentCyclesPage,
+};
+
+const DEFAULT_ROUTE = 'overview';
+const ROUTE_KEYS = Object.keys(ROUTES);
+
+const RouteRenderer = ({ route }) => {
+  const Component = ROUTES[route] || ROUTES[DEFAULT_ROUTE];
+  return <Component />;
+};
+
+RouteRenderer.propTypes = {
+  route: PropTypes.string.isRequired,
+};
 
 export default function App() {
+  const { isAuthenticated, status } = useAuth();
+  const [route, navigate] = useHashRoute(DEFAULT_ROUTE, ROUTE_KEYS);
+
+  const handleAuthenticated = useCallback(() => {
+    navigate(DEFAULT_ROUTE);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated && typeof window !== 'undefined') {
+      const currentHash = window.location.hash.replace(/^#/, '');
+      if (!currentHash) {
+        window.location.hash = `#${route}`;
+      }
+    }
+  }, [isAuthenticated, route]);
+
+  if (status === 'loading') {
+    return <FullScreenLoader message="Loading your workspace…" />;
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage onAuthenticated={handleAuthenticated} />;
+  }
+
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-16">
-        <header>
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
-            Family Finance Tracker
-          </p>
-          <h1 className="mt-2 text-4xl font-bold">Developer Experience Starter</h1>
-          <p className="mt-4 text-lg text-slate-600">
-            This scaffold provides a productive baseline for building the Family Finance Tracker
-            platform with a modern frontend and backend toolkit.
-          </p>
-        </header>
-        <ul className="grid gap-4 sm:grid-cols-3">
-          {features.map((feature) => (
-            <li
-              key={feature}
-              className="rounded-lg border border-slate-200 bg-white p-4 text-sm shadow-sm"
-            >
-              {feature}
-            </li>
-          ))}
-        </ul>
-      </section>
-    </main>
+    <AppLayout activeRoute={route} onNavigate={navigate}>
+      <RouteRenderer route={route} />
+    </AppLayout>
   );
 }
