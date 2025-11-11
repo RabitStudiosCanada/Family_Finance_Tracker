@@ -34,6 +34,24 @@ const findByUserId = ({ userId, type }) => {
   return query.orderBy('transactions.transaction_date', 'desc');
 };
 
+const findByUserIdWithinDateRange = ({ userId, startDate, endDate, type }) => {
+  const query = baseQuery().where('transactions.user_id', userId);
+
+  if (startDate) {
+    query.andWhere('transactions.transaction_date', '>=', startDate);
+  }
+
+  if (endDate) {
+    query.andWhere('transactions.transaction_date', '<=', endDate);
+  }
+
+  if (type) {
+    query.andWhere('transactions.type', type);
+  }
+
+  return query.orderBy('transactions.transaction_date', 'asc');
+};
+
 const create = async (transaction) => {
   await db(TABLE_NAME).insert({
     ...transaction,
@@ -60,6 +78,7 @@ const deleteById = (id) => db(TABLE_NAME).where({ id }).del();
 module.exports = {
   findById,
   findByUserId,
+  findByUserIdWithinDateRange,
   create,
   updateById,
   deleteById,

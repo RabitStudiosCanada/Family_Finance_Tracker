@@ -260,4 +260,84 @@ describe('Finance API', () => {
       expect(storedTransaction).toBeUndefined();
     });
   });
+
+  describe('Agency Engine', () => {
+    const calculationDate = '2025-11-01';
+
+    it('recalculates the authenticated adult snapshot', async () => {
+      const response = await request(app)
+        .post('/api/agency/recalculate')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({ calculatedFor: calculationDate });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.snapshot).toMatchObject({
+        userId: adultUser.id,
+        calculatedFor: calculationDate,
+        creditAgencyCents: 685925,
+        backedAgencyCents: 715219,
+        availableCreditCents: 735925,
+        projectedObligationsCents: 34781,
+      });
+
+      const storedSnapshot = await knex('agency_snapshots')
+        .where({ user_id: adultUser.id, calculated_for: calculationDate })
+        .first();
+
+      expect(storedSnapshot.credit_agency_cents).toBe(685925);
+      expect(storedSnapshot.backed_agency_cents).toBe(715219);
+    });
+
+    it('allows admins to recalculate and fetch agency snapshots for other adults', async () => {
+      const partnerUser = await knex('users')
+        .where({ email: 'casey.partner@agency.local' })
+        .first();
+
+      const recalcResponse = await request(app)
+        .post('/api/agency/recalculate')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: partnerUser.id,
+          calculatedFor: calculationDate,
+          notes: 'Admin triggered recompute',
+        });
+
+      expect(recalcResponse.status).toBe(201);
+      expect(recalcResponse.body.data.snapshot).toMatchObject({
+        userId: partnerUser.id,
+        calculatedFor: calculationDate,
+        creditAgencyCents: 1240410,
+        backedAgencyCents: 520770,
+        availableCreditCents: 1315410,
+        projectedObligationsCents: 9230,
+        notes: 'Admin triggered recompute',
+      });
+
+      const fetchResponse = await request(app)
+        .get(`/api/agency/snapshots/${calculationDate}`)
+        .query({ userId: partnerUser.id })
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(fetchResponse.status).toBe(200);
+      expect(fetchResponse.body.data.snapshot).toMatchObject({
+        userId: partnerUser.id,
+        creditAgencyCents: 1240410,
+        backedAgencyCents: 520770,
+        notes: 'Admin triggered recompute',
+      });
+    });
+
+    it('lists agency snapshots for the authenticated user', async () => {
+      const response = await request(app)
+        .get('/api/agency/snapshots')
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.snapshots.length).toBeGreaterThan(0);
+      expect(response.body.data.snapshots[0]).toMatchObject({
+        userId: adultUser.id,
+        calculatedFor: calculationDate,
+      });
+    });
+  });
 });

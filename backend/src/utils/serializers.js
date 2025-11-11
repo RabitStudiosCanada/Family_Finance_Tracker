@@ -84,9 +84,25 @@ const serializeTransaction = (transaction) =>
     updatedAt: transaction.updated_at,
   });
 
+const serializeAgencySnapshot = (snapshot) =>
+  pickDefined({
+    id: snapshot.id,
+    userId: snapshot.user_id,
+    calculatedFor: snapshot.calculated_for,
+    creditAgencyCents: snapshot.credit_agency_cents,
+    backedAgencyCents: snapshot.backed_agency_cents,
+    availableCreditCents: snapshot.available_credit_cents,
+    projectedObligationsCents: snapshot.projected_obligations_cents,
+    calculatedAt: snapshot.calculated_at,
+    notes: snapshot.notes,
+    createdAt: snapshot.created_at,
+    updatedAt: snapshot.updated_at,
+  });
+
 module.exports = {
   serializeUser,
   serializeCreditCard,
   serializeIncomeStream,
   serializeTransaction,
+  serializeAgencySnapshot,
 };
