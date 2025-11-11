@@ -28,6 +28,21 @@ const findOpenByCreditCardIds = (creditCardIds = []) => {
     .whereNull('credit_card_cycles.closed_at');
 };
 
+const findById = (id) => baseQuery().where('credit_card_cycles.id', id).first();
+
+const updateById = async (id, updates) => {
+  await db(TABLE_NAME)
+    .where({ id })
+    .update({
+      ...updates,
+      updated_at: db.fn.now(),
+    });
+
+  return findById(id);
+};
+
 module.exports = {
+  findById,
   findOpenByCreditCardIds,
+  updateById,
 };

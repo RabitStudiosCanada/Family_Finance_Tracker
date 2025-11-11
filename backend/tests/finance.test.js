@@ -215,6 +215,34 @@ describe('Finance API', () => {
       });
     });
 
+    it('filters transactions by date range, category, and credit card', async () => {
+      const response = await request(app)
+        .get('/api/transactions')
+        .query({
+          startDate: '2025-11-01',
+          endDate: '2025-11-04',
+          category: 'groceries',
+          creditCardId: referenceCard.id,
+        })
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.transactions).toHaveLength(1);
+      expect(response.body.data.transactions[0]).toMatchObject({
+        category: 'Groceries',
+        creditCardId: referenceCard.id,
+      });
+    });
+
+    it('rejects requests where the start date is after the end date', async () => {
+      const response = await request(app)
+        .get('/api/transactions')
+        .query({ startDate: '2025-11-10', endDate: '2025-11-01' })
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(response.status).toBe(422);
+    });
+
     it('creates, updates, and deletes a transaction', async () => {
       const createPayload = {
         creditCardId: referenceCard.id,
@@ -267,6 +295,13 @@ describe('Finance API', () => {
 
   describe('Payment Cycles', () => {
     const referenceDate = '2025-11-15';
+    let referenceCycle;
+
+    beforeAll(async () => {
+      referenceCycle = await knex('credit_card_cycles')
+        .where({ credit_card_id: adultCreditCard.id })
+        .first();
+    });
 
     it('returns cycle summaries for the authenticated adult', async () => {
       const response = await request(app)
@@ -319,6 +354,42 @@ describe('Finance API', () => {
       expect(summary.upcomingCycle.daysUntilStatement).toBe(28);
       expect(summary.upcomingCycle.paymentDueDate).toBe('2026-01-07');
       expect(summary.upcomingCycle.daysUntilPaymentDue).toBe(53);
+    });
+
+    it('records and clears a payment for the current cycle', async () => {
+      const markResponse = await request(app)
+        .post(`/api/payment-cycles/${referenceCycle.id}/record-payment`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({ paymentRecordedOn: '2025-11-20' });
+
+      expect(markResponse.status).toBe(200);
+      expect(markResponse.body.data.paymentCycle.currentCycle).toMatchObject({
+        paymentRecordedOn: '2025-11-20',
+        isPaid: true,
+      });
+
+      const storedCycle = await knex('credit_card_cycles')
+        .where({ id: referenceCycle.id })
+        .first();
+      expect(storedCycle.payment_recorded_on).toBe('2025-11-20');
+
+      const clearResponse = await request(app)
+        .post(`/api/payment-cycles/${referenceCycle.id}/record-payment`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({ clear: true });
+
+      expect(clearResponse.status).toBe(200);
+      expect(clearResponse.body.data.paymentCycle.currentCycle).toMatchObject({
+        isPaid: false,
+      });
+      expect(
+        clearResponse.body.data.paymentCycle.currentCycle.paymentRecordedOn
+      ).toBeUndefined();
+
+      const clearedCycle = await knex('credit_card_cycles')
+        .where({ id: referenceCycle.id })
+        .first();
+      expect(clearedCycle.payment_recorded_on).toBeNull();
     });
   });
 
@@ -399,6 +470,61 @@ describe('Finance API', () => {
         userId: adultUser.id,
         calculatedFor: calculationDate,
       });
+    });
+
+    it('includes warning context when thresholds are exceeded', async () => {
+      const cycle = await knex('credit_card_cycles')
+        .where({ credit_card_id: adultCreditCard.id })
+        .first();
+      const originalStatementBalance = cycle.statement_balance_cents;
+
+      const createResponse = await request(app)
+        .post('/api/transactions')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({
+          creditCardId: adultCreditCard.id,
+          type: 'expense',
+          amountCents: -750000,
+          category: 'Emergency Fund',
+          transactionDate: '2025-11-05',
+        });
+
+      expect(createResponse.status).toBe(201);
+
+      const transactionId = createResponse.body.data.transaction.id;
+
+      await knex('credit_card_cycles')
+        .where({ id: cycle.id })
+        .update({ statement_balance_cents: 950000 });
+
+      try {
+        const warningResponse = await request(app)
+          .post('/api/agency/recalculate')
+          .set('Authorization', `Bearer ${adultToken}`)
+          .send({ calculatedFor: calculationDate });
+
+        expect(warningResponse.status).toBe(201);
+
+        const snapshot = warningResponse.body.data.snapshot;
+
+        expect(snapshot.backedCoveragePercent).toBeGreaterThanOrEqual(75);
+        expect(snapshot.creditUtilizationPercent).toBeGreaterThanOrEqual(75);
+        expect(snapshot.warnings).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ type: 'backedAgency' }),
+            expect.objectContaining({ type: 'creditUtilization' }),
+          ])
+        );
+      } finally {
+        await knex('transactions').where({ id: transactionId }).del();
+        await knex('credit_card_cycles')
+          .where({ id: cycle.id })
+          .update({ statement_balance_cents: originalStatementBalance });
+        await request(app)
+          .post('/api/agency/recalculate')
+          .set('Authorization', `Bearer ${adultToken}`)
+          .send({ calculatedFor: calculationDate });
+      }
     });
   });
 });

@@ -110,11 +110,29 @@ const toDatabaseTransaction = ({
     }).filter(([, value]) => value !== undefined)
   );
 
-const listTransactions = async (currentUser, { type, userId } = {}) => {
+const listTransactions = async (
+  currentUser,
+  { type, userId, startDate, endDate, category, creditCardId } = {}
+) => {
   const targetUserId = await resolveTargetUserId(currentUser, userId);
+
+  if (startDate && endDate && startDate > endDate) {
+    throw createError(400, 'Start date cannot be after end date');
+  }
+
+  if (creditCardId) {
+    await ensureCreditCardAssignable(targetUserId, creditCardId);
+  }
+
+  const normalizedCategory = category ? category.trim() : undefined;
+
   const transactions = await transactionsRepository.findByUserId({
     userId: targetUserId,
     type,
+    startDate,
+    endDate,
+    category: normalizedCategory,
+    creditCardId,
   });
 
   return transactions.map(serializeTransaction);
