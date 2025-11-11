@@ -6,6 +6,9 @@ const creditCardsRoutes = require('./creditCardsRoutes');
 const incomeStreamsRoutes = require('./incomeStreamsRoutes');
 const paymentCyclesRoutes = require('./paymentCyclesRoutes');
 const transactionsRoutes = require('./transactionsRoutes');
+const projectedExpensesRoutes = require('./projectedExpensesRoutes');
+const savingsGoalsRoutes = require('./savingsGoalsRoutes');
+const categoryBudgetsRoutes = require('./categoryBudgetsRoutes');
 const usersRoutes = require('./usersRoutes');
 const { requireAuth, requireRole } = require('../middleware/authMiddleware');
 
@@ -18,5 +21,23 @@ router.use('/credit-cards', requireAuth, creditCardsRoutes);
 router.use('/income-streams', requireAuth, incomeStreamsRoutes);
 router.use('/payment-cycles', requireAuth, paymentCyclesRoutes);
 router.use('/transactions', requireAuth, transactionsRoutes);
+router.use(
+  '/projected-expenses',
+  requireAuth,
+  requireRole('admin', 'adult'),
+  projectedExpensesRoutes
+);
+router.use(
+  '/savings-goals',
+  requireAuth,
+  requireRole('admin', 'adult'),
+  savingsGoalsRoutes
+);
+router.use(
+  '/category-budgets',
+  requireAuth,
+  requireRole('admin', 'adult'),
+  categoryBudgetsRoutes
+);
 
 module.exports = router;

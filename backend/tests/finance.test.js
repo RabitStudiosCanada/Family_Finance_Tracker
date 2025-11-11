@@ -406,18 +406,24 @@ describe('Finance API', () => {
       expect(response.body.data.snapshot).toMatchObject({
         userId: adultUser.id,
         calculatedFor: calculationDate,
-        creditAgencyCents: 685925,
-        backedAgencyCents: 715219,
+        creditAgencyCents: 604595,
+        backedAgencyCents: 0,
         availableCreditCents: 735925,
-        projectedObligationsCents: 34781,
+        projectedObligationsCents: 831330,
+        projectedExpenseTotalCents: 51549,
+        savingsCommitmentsCents: 745000,
+        safeToSpendCents: 0,
       });
 
       const storedSnapshot = await knex('agency_snapshots')
         .where({ user_id: adultUser.id, calculated_for: calculationDate })
         .first();
 
-      expect(storedSnapshot.credit_agency_cents).toBe(685925);
-      expect(storedSnapshot.backed_agency_cents).toBe(715219);
+      expect(storedSnapshot.credit_agency_cents).toBe(604595);
+      expect(storedSnapshot.backed_agency_cents).toBe(0);
+      expect(storedSnapshot.projected_expense_total_cents).toBe(51549);
+      expect(storedSnapshot.savings_commitments_cents).toBe(745000);
+      expect(storedSnapshot.safe_to_spend_cents).toBe(0);
     });
 
     it('allows admins to recalculate and fetch agency snapshots for other adults', async () => {
@@ -442,6 +448,9 @@ describe('Finance API', () => {
         backedAgencyCents: 520770,
         availableCreditCents: 1315410,
         projectedObligationsCents: 9230,
+        projectedExpenseTotalCents: 0,
+        savingsCommitmentsCents: 0,
+        safeToSpendCents: 520770,
         notes: 'Admin triggered recompute',
       });
 
@@ -455,6 +464,9 @@ describe('Finance API', () => {
         userId: partnerUser.id,
         creditAgencyCents: 1240410,
         backedAgencyCents: 520770,
+        projectedExpenseTotalCents: 0,
+        savingsCommitmentsCents: 0,
+        safeToSpendCents: 520770,
         notes: 'Admin triggered recompute',
       });
     });
@@ -525,6 +537,302 @@ describe('Finance API', () => {
           .set('Authorization', `Bearer ${adultToken}`)
           .send({ calculatedFor: calculationDate });
       }
+    });
+  });
+
+  describe('Projected Expenses', () => {
+    let seededExpense;
+
+    beforeAll(async () => {
+      seededExpense = await knex('projected_expenses')
+        .where({ user_id: adultUser.id })
+        .first();
+    });
+
+    it('lists projected expenses for the authenticated adult', async () => {
+      const response = await request(app)
+        .get('/api/projected-expenses')
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.projectedExpenses.length).toBeGreaterThan(0);
+      response.body.data.projectedExpenses.forEach((expense) => {
+        expect(expense.userId).toBe(adultUser.id);
+      });
+    });
+
+    it('allows admins to filter projected expenses by user', async () => {
+      const response = await request(app)
+        .get('/api/projected-expenses')
+        .query({ userId: adultUser.id })
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.projectedExpenses.length).toBeGreaterThan(0);
+      response.body.data.projectedExpenses.forEach((expense) => {
+        expect(expense.userId).toBe(adultUser.id);
+      });
+    });
+
+    it('creates, updates, commits, and marks a projected expense as paid', async () => {
+      const createPayload = {
+        amountCents: 12999,
+        category: 'Gifts',
+        expectedDate: '2025-11-25',
+        notes: 'Holiday shopping plan',
+      };
+
+      const createResponse = await request(app)
+        .post('/api/projected-expenses')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send(createPayload);
+
+      expect(createResponse.status).toBe(201);
+      expect(createResponse.body.data.projectedExpense).toMatchObject({
+        userId: adultUser.id,
+        status: 'planned',
+      });
+
+      const expenseId = createResponse.body.data.projectedExpense.id;
+
+      const updateResponse = await request(app)
+        .patch(`/api/projected-expenses/${expenseId}`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({ notes: 'Updated note' });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.data.projectedExpense.notes).toBe(
+        'Updated note'
+      );
+
+      const commitResponse = await request(app)
+        .post(`/api/projected-expenses/${expenseId}/commit`)
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(commitResponse.status).toBe(200);
+      expect(commitResponse.body.data.projectedExpense.status).toBe(
+        'committed'
+      );
+
+      const paidResponse = await request(app)
+        .post(`/api/projected-expenses/${expenseId}/mark-paid`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({
+          transactionId: seededExpense ? seededExpense.transaction_id : null,
+        });
+
+      expect(paidResponse.status).toBe(200);
+      expect(paidResponse.body.data.projectedExpense.status).toBe('paid');
+    });
+
+    it('cancels and deletes projected expenses with valid states', async () => {
+      const cancelCreate = await request(app)
+        .post('/api/projected-expenses')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({
+          amountCents: 8800,
+          category: 'Home',
+          expectedDate: '2025-12-01',
+        });
+
+      const cancelId = cancelCreate.body.data.projectedExpense.id;
+
+      const cancelResponse = await request(app)
+        .post(`/api/projected-expenses/${cancelId}/cancel`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({ reason: 'No longer needed' });
+
+      expect(cancelResponse.status).toBe(200);
+      expect(cancelResponse.body.data.projectedExpense).toMatchObject({
+        status: 'cancelled',
+        cancelledReason: 'No longer needed',
+      });
+
+      const deleteCreate = await request(app)
+        .post('/api/projected-expenses')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({
+          amountCents: 4500,
+          category: 'Subscriptions',
+          expectedDate: '2025-11-30',
+        });
+
+      const deletableId = deleteCreate.body.data.projectedExpense.id;
+
+      const deleteResponse = await request(app)
+        .delete(`/api/projected-expenses/${deletableId}`)
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(deleteResponse.status).toBe(204);
+    });
+  });
+
+  describe('Savings Goals', () => {
+    let seededGoal;
+
+    beforeAll(async () => {
+      seededGoal = await knex('savings_goals')
+        .where({ owner_user_id: adultUser.id })
+        .first();
+    });
+
+    it('lists savings goals and returns contribution totals', async () => {
+      const response = await request(app)
+        .get('/api/savings-goals')
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.savingsGoals.length).toBeGreaterThan(0);
+      response.body.data.savingsGoals.forEach((goal) => {
+        expect(goal.ownerUserId).toBe(adultUser.id);
+        expect(goal.totalContributionsCents).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it('creates, updates, completes, and abandons savings goals', async () => {
+      const createPayload = {
+        name: 'New Bike Fund',
+        targetAmountCents: 120000,
+        startDate: '2025-10-01',
+        targetDate: '2026-05-01',
+        category: 'Lifestyle',
+        notes: 'For a commuter e-bike',
+      };
+
+      const createResponse = await request(app)
+        .post('/api/savings-goals')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send(createPayload);
+
+      expect(createResponse.status).toBe(201);
+      expect(createResponse.body.data.savingsGoal).toMatchObject({
+        ownerUserId: adultUser.id,
+        status: 'active',
+      });
+
+      const goalId = createResponse.body.data.savingsGoal.id;
+
+      const updateResponse = await request(app)
+        .patch(`/api/savings-goals/${goalId}`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({ targetDate: '2026-06-01' });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.data.savingsGoal.targetDate).toBe(
+        '2026-06-01'
+      );
+
+      const completeResponse = await request(app)
+        .post(`/api/savings-goals/${goalId}/complete`)
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(completeResponse.status).toBe(200);
+      expect(completeResponse.body.data.savingsGoal.status).toBe('completed');
+
+      const abandonCreate = await request(app)
+        .post('/api/savings-goals')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({
+          name: 'Kitchen Remodel',
+          targetAmountCents: 800000,
+          startDate: '2025-09-01',
+        });
+
+      const abandonId = abandonCreate.body.data.savingsGoal.id;
+
+      const abandonResponse = await request(app)
+        .post(`/api/savings-goals/${abandonId}/abandon`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({ reason: 'Shifted priorities' });
+
+      expect(abandonResponse.status).toBe(200);
+      expect(abandonResponse.body.data.savingsGoal).toMatchObject({
+        status: 'abandoned',
+        abandonedReason: 'Shifted priorities',
+      });
+    });
+
+    it('adds and removes contributions for active goals', async () => {
+      const contributionPayload = {
+        amountCents: 25000,
+        contributionDate: '2025-11-10',
+        source: 'manual',
+        notes: 'Bonus allocation',
+      };
+
+      const createResponse = await request(app)
+        .post(`/api/savings-goals/${seededGoal.id}/contributions`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send(contributionPayload);
+
+      expect(createResponse.status).toBe(201);
+      expect(
+        createResponse.body.data.savingsGoal.totalContributionsCents
+      ).toBeGreaterThanOrEqual(contributionPayload.amountCents);
+
+      const contributionId = createResponse.body.data.contribution.id;
+
+      const deleteResponse = await request(app)
+        .delete(
+          `/api/savings-goals/${seededGoal.id}/contributions/${contributionId}`
+        )
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(deleteResponse.status).toBe(200);
+      expect(deleteResponse.body.data.savingsGoal.id).toBe(seededGoal.id);
+    });
+  });
+
+  describe('Category Budgets', () => {
+    it('lists budgets for the authenticated adult', async () => {
+      const response = await request(app)
+        .get('/api/category-budgets')
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.categoryBudgets.length).toBeGreaterThan(0);
+      response.body.data.categoryBudgets.forEach((budget) => {
+        expect(budget.userId).toBe(adultUser.id);
+      });
+    });
+
+    it('creates, updates, and deletes category budgets', async () => {
+      const createPayload = {
+        category: 'Personal Care',
+        limitAmountCents: 15000,
+        period: 'monthly',
+        warningThreshold: 0.75,
+      };
+
+      const createResponse = await request(app)
+        .post('/api/category-budgets')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send(createPayload);
+
+      expect(createResponse.status).toBe(201);
+      expect(createResponse.body.data.categoryBudget).toMatchObject({
+        userId: adultUser.id,
+        category: 'Personal Care',
+      });
+
+      const budgetId = createResponse.body.data.categoryBudget.id;
+
+      const updateResponse = await request(app)
+        .patch(`/api/category-budgets/${budgetId}`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({ warningThreshold: 0.6, isActive: false });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.data.categoryBudget).toMatchObject({
+        warningThreshold: 0.6,
+        isActive: false,
+      });
+
+      const deleteResponse = await request(app)
+        .delete(`/api/category-budgets/${budgetId}`)
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(deleteResponse.status).toBe(204);
     });
   });
 });

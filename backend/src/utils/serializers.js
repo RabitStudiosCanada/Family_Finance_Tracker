@@ -84,6 +84,78 @@ const serializeTransaction = (transaction) =>
     updatedAt: transaction.updated_at,
   });
 
+const serializeProjectedExpense = (expense) =>
+  pickDefined({
+    id: expense.id,
+    userId: expense.user_id,
+    creditCardId: expense.credit_card_id,
+    transactionId: expense.transaction_id,
+    amountCents: expense.amount_cents,
+    category: expense.category,
+    expectedDate: expense.expected_date,
+    status: expense.status,
+    notes: expense.notes,
+    committedAt: expense.committed_at,
+    paidAt: expense.paid_at,
+    cancelledAt: expense.cancelled_at,
+    cancelledReason: expense.cancelled_reason,
+    createdAt: expense.created_at,
+    updatedAt: expense.updated_at,
+  });
+
+const serializeSavingsGoal = (goal) =>
+  pickDefined({
+    id: goal.id,
+    ownerUserId: goal.owner_user_id,
+    name: goal.name,
+    targetAmountCents: goal.target_amount_cents,
+    startDate: goal.start_date,
+    targetDate: goal.target_date,
+    status: goal.status,
+    category: goal.category,
+    notes: goal.notes,
+    completedAt: goal.completed_at,
+    abandonedAt: goal.abandoned_at,
+    abandonedReason: goal.abandoned_reason,
+    totalContributionsCents: goal.total_contributions_cents
+      ? Number(goal.total_contributions_cents)
+      : 0,
+    createdAt: goal.created_at,
+    updatedAt: goal.updated_at,
+  });
+
+const serializeSavingsContribution = (contribution) =>
+  pickDefined({
+    id: contribution.id,
+    goalId: contribution.goal_id,
+    userId: contribution.user_id,
+    amountCents: contribution.amount_cents,
+    source: contribution.source,
+    contributionDate: contribution.contribution_date,
+    notes: contribution.notes,
+    createdAt: contribution.created_at,
+    updatedAt: contribution.updated_at,
+  });
+
+const serializeCategoryBudget = (budget) =>
+  pickDefined({
+    id: budget.id,
+    userId: budget.user_id,
+    category: budget.category,
+    period: budget.period,
+    limitAmountCents: budget.limit_amount_cents,
+    warningThreshold:
+      budget.warning_threshold !== undefined &&
+      budget.warning_threshold !== null
+        ? Number(budget.warning_threshold)
+        : undefined,
+    periodStartDate: budget.period_start_date,
+    periodEndDate: budget.period_end_date,
+    isActive: Boolean(budget.is_active),
+    createdAt: budget.created_at,
+    updatedAt: budget.updated_at,
+  });
+
 const serializeAgencySnapshot = (snapshot) =>
   pickDefined({
     id: snapshot.id,
@@ -93,6 +165,9 @@ const serializeAgencySnapshot = (snapshot) =>
     backedAgencyCents: snapshot.backed_agency_cents,
     availableCreditCents: snapshot.available_credit_cents,
     projectedObligationsCents: snapshot.projected_obligations_cents,
+    projectedExpenseTotalCents: snapshot.projected_expense_total_cents,
+    savingsCommitmentsCents: snapshot.savings_commitments_cents,
+    safeToSpendCents: snapshot.safe_to_spend_cents,
     calculatedAt: snapshot.calculated_at,
     notes: snapshot.notes,
     createdAt: snapshot.created_at,
@@ -141,6 +216,10 @@ module.exports = {
   serializeCreditCard,
   serializeIncomeStream,
   serializeTransaction,
+  serializeProjectedExpense,
+  serializeSavingsGoal,
+  serializeSavingsContribution,
+  serializeCategoryBudget,
   serializeAgencySnapshot,
   serializePaymentCycle,
 };

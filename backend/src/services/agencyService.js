@@ -5,6 +5,8 @@ const agencySnapshotsRepository = require('../repositories/agencySnapshotsReposi
 const creditCardCyclesRepository = require('../repositories/creditCardCyclesRepository');
 const creditCardsRepository = require('../repositories/creditCardsRepository');
 const incomeStreamsRepository = require('../repositories/incomeStreamsRepository');
+const projectedExpensesRepository = require('../repositories/projectedExpensesRepository');
+const savingsGoalsRepository = require('../repositories/savingsGoalsRepository');
 const transactionsRepository = require('../repositories/transactionsRepository');
 const usersRepository = require('../repositories/usersRepository');
 const { serializeAgencySnapshot } = require('../utils/serializers');
@@ -83,6 +85,9 @@ const decorateSnapshot = (snapshot, { totalCreditLimitCents }) => {
   const projectedObligationsCents = snapshot.projectedObligationsCents ?? 0;
   const backedAgencyCents = snapshot.backedAgencyCents ?? 0;
   const availableCreditCents = snapshot.availableCreditCents ?? 0;
+  const projectedExpenseTotalCents = snapshot.projectedExpenseTotalCents ?? 0;
+  const savingsCommitmentsCents = snapshot.savingsCommitmentsCents ?? 0;
+  const safeToSpendCents = snapshot.safeToSpendCents ?? 0;
   const upcomingIncomeCents = projectedObligationsCents + backedAgencyCents;
 
   const backedCoveragePercent = upcomingIncomeCents
@@ -133,6 +138,17 @@ const decorateSnapshot = (snapshot, { totalCreditLimitCents }) => {
     }
   }
 
+  if (safeToSpendCents <= 0 && projectedObligationsCents > 0) {
+    warnings.push({
+      type: 'safeToSpend',
+      level: 'critical',
+      threshold: 0,
+      percent: 100,
+      message:
+        'Projected expenses and savings commitments fully consume expected income. Pause discretionary spending until obligations are covered.',
+    });
+  }
+
   warnings.sort(
     (a, b) => WARNING_LEVEL_PRIORITY[a.level] - WARNING_LEVEL_PRIORITY[b.level]
   );
@@ -143,6 +159,9 @@ const decorateSnapshot = (snapshot, { totalCreditLimitCents }) => {
     upcomingIncomeCents,
     backedCoveragePercent,
     creditUtilizationPercent,
+    projectedExpenseTotalCents,
+    savingsCommitmentsCents,
+    safeToSpendCents,
     warnings,
   };
 };
@@ -263,13 +282,20 @@ const calculateSnapshotForUser = async (
 
   const creditCardIds = creditCards.map((card) => card.id);
 
-  const [openCycles, upcomingTransactions] = await Promise.all([
+  const [
+    openCycles,
+    upcomingTransactions,
+    projectedExpenseTotalCents,
+    savingsCommitmentsCents,
+  ] = await Promise.all([
     creditCardCyclesRepository.findOpenByCreditCardIds(creditCardIds),
     transactionsRepository.findByUserIdWithinDateRange({
       userId,
       startDate: calculatedForDate,
       endDate: endDateIso,
     }),
+    projectedExpensesRepository.sumOpenAmountsByUserId(userId),
+    savingsGoalsRepository.sumOutstandingCommitmentsByUserId(userId),
   ]);
 
   const totalCreditLimitCents = creditCards.reduce(
@@ -296,7 +322,11 @@ const calculateSnapshotForUser = async (
     })
     .reduce((sum, cycle) => sum + cycle.minimum_payment_cents, 0);
 
-  const projectedObligationsCents = pendingExpensesCents + minimumPaymentsCents;
+  const projectedObligationsCents =
+    pendingExpensesCents +
+    minimumPaymentsCents +
+    projectedExpenseTotalCents +
+    savingsCommitmentsCents;
 
   const upcomingIncomeCents = incomeStreams.reduce((sum, stream) => {
     const occurrences = occurrencesWithinWindow(stream, startDate, endDate);
@@ -322,6 +352,11 @@ const calculateSnapshotForUser = async (
     0
   );
 
+  const safeToSpendCents = Math.max(
+    upcomingIncomeCents - projectedObligationsCents,
+    0
+  );
+
   const snapshotRecord = {
     id: randomUUID(),
     user_id: userId,
@@ -330,6 +365,9 @@ const calculateSnapshotForUser = async (
     backed_agency_cents: backedAgencyCents,
     available_credit_cents: availableCreditCents,
     projected_obligations_cents: projectedObligationsCents,
+    projected_expense_total_cents: projectedExpenseTotalCents,
+    savings_commitments_cents: savingsCommitmentsCents,
+    safe_to_spend_cents: safeToSpendCents,
     calculated_at: new Date().toISOString(),
     notes,
   };
