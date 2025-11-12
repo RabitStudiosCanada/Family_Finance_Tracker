@@ -178,3 +178,77 @@ export const deleteProjectedExpense = (token, expenseId) =>
     method: 'DELETE',
     token,
   });
+
+export const fetchSavingsGoals = (token, params = {}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params.userId) {
+    searchParams.set('userId', params.userId);
+  }
+
+  if (params.status) {
+    searchParams.set('status', params.status);
+  }
+
+  appendStatuses(searchParams, params.statuses);
+
+  const query = searchParams.toString();
+  const suffix = query ? `?${query}` : '';
+
+  return apiFetch(`/savings-goals${suffix}`, {
+    method: 'GET',
+    token,
+  });
+};
+
+export const fetchSavingsGoal = (token, goalId) =>
+  apiFetch(`/savings-goals/${goalId}`, {
+    method: 'GET',
+    token,
+  });
+
+export const createSavingsGoal = (token, payload) =>
+  apiFetch('/savings-goals', {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const updateSavingsGoal = (token, goalId, payload) =>
+  apiFetch(`/savings-goals/${goalId}`, {
+    method: 'PATCH',
+    token,
+    body: payload,
+  });
+
+export const completeSavingsGoal = (token, goalId) =>
+  apiFetch(`/savings-goals/${goalId}/complete`, {
+    method: 'POST',
+    token,
+  });
+
+export const abandonSavingsGoal = (token, goalId, payload = {}) =>
+  apiFetch(`/savings-goals/${goalId}/abandon`, {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const addSavingsGoalContribution = (token, goalId, payload) =>
+  apiFetch(`/savings-goals/${goalId}/contributions`, {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const deleteSavingsGoalContribution = (token, goalId, contributionId) =>
+  apiFetch(`/savings-goals/${goalId}/contributions/${contributionId}`, {
+    method: 'DELETE',
+    token,
+  });
+
+export const fetchSavingsGoalContributions = (token, goalId) =>
+  apiFetch(`/savings-goals/${goalId}/contributions`, {
+    method: 'GET',
+    token,
+  });

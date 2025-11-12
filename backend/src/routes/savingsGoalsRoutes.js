@@ -11,6 +11,7 @@ const {
   abandonSavingsGoalSchema,
   addContributionSchema,
   deleteContributionSchema,
+  listContributionsSchema,
 } = require('../schemas/planningSchemas');
 
 const router = Router();
@@ -54,6 +55,11 @@ router.delete(
   '/:id/contributions/:contributionId',
   validateRequest(deleteContributionSchema),
   savingsGoalsController.deleteContribution
+);
+router.get(
+  '/:id/contributions',
+  validateRequest(listContributionsSchema),
+  savingsGoalsController.listContributions
 );
 
 module.exports = router;

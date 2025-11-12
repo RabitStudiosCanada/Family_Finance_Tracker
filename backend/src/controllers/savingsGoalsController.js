@@ -77,6 +77,15 @@ const deleteContribution = async (req, res) => {
   return response.ok(res, { data: { savingsGoal } });
 };
 
+const listContributions = async (req, res) => {
+  const contributions = await savingsGoalsService.listContributions(
+    req.user,
+    req.params.id
+  );
+
+  return response.ok(res, { data: { contributions } });
+};
+
 module.exports = {
   listSavingsGoals,
   getSavingsGoal,
@@ -86,4 +95,5 @@ module.exports = {
   abandonSavingsGoal,
   addContribution,
   deleteContribution,
+  listContributions,
 };

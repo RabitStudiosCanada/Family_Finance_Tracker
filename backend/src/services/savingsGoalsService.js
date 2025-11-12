@@ -253,6 +253,17 @@ const deleteContribution = async (currentUser, goalId, contributionId) => {
   return serializeSavingsGoal(refreshedGoal);
 };
 
+const listContributions = async (currentUser, goalId) => {
+  const goal = await savingsGoalsRepository.findById(goalId);
+
+  ensureGoalAccessible(currentUser, goal);
+
+  const contributions =
+    await savingsContributionsRepository.findByGoalId(goalId);
+
+  return contributions.map(serializeSavingsContribution);
+};
+
 module.exports = {
   listSavingsGoals,
   getSavingsGoal,
@@ -262,4 +273,5 @@ module.exports = {
   abandonSavingsGoal,
   addContribution,
   deleteContribution,
+  listContributions,
 };
