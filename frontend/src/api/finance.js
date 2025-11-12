@@ -106,3 +106,75 @@ export const recordPaymentCycle = (token, cycleId, payload = {}) =>
     token,
     body: payload,
   });
+
+const appendStatuses = (searchParams, statuses) => {
+  if (!statuses?.length) {
+    return;
+  }
+
+  statuses.forEach((status) => {
+    searchParams.append('statuses', status);
+  });
+};
+
+export const fetchProjectedExpenses = (token, params = {}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params.userId) {
+    searchParams.set('userId', params.userId);
+  }
+
+  if (params.status) {
+    searchParams.set('status', params.status);
+  }
+
+  appendStatuses(searchParams, params.statuses);
+
+  const query = searchParams.toString();
+  const suffix = query ? `?${query}` : '';
+
+  return apiFetch(`/projected-expenses${suffix}`, {
+    method: 'GET',
+    token,
+  });
+};
+
+export const createProjectedExpense = (token, payload) =>
+  apiFetch('/projected-expenses', {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const updateProjectedExpense = (token, expenseId, payload) =>
+  apiFetch(`/projected-expenses/${expenseId}`, {
+    method: 'PATCH',
+    token,
+    body: payload,
+  });
+
+export const commitProjectedExpense = (token, expenseId) =>
+  apiFetch(`/projected-expenses/${expenseId}/commit`, {
+    method: 'POST',
+    token,
+  });
+
+export const markProjectedExpensePaid = (token, expenseId, payload = {}) =>
+  apiFetch(`/projected-expenses/${expenseId}/mark-paid`, {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const cancelProjectedExpense = (token, expenseId, payload = {}) =>
+  apiFetch(`/projected-expenses/${expenseId}/cancel`, {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const deleteProjectedExpense = (token, expenseId) =>
+  apiFetch(`/projected-expenses/${expenseId}`, {
+    method: 'DELETE',
+    token,
+  });
