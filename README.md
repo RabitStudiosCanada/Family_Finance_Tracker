@@ -974,7 +974,7 @@ npm run seed:demo
   - [x] Upcoming payments
   - [x] Quick-add transaction
 
-**Deliverable:** Adults can track all credit cards and income, see real-time agency, and review upcoming obligations in the authenticated frontend shell.
+**Deliverable:** Adults can track all credit cards and income, manage those records through in-app modals with validation and archive actions, see real-time agency, and review upcoming obligations in the authenticated frontend shell.
 
 ---
 

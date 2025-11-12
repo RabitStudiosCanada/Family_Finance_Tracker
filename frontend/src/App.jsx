@@ -32,40 +32,6 @@ RouteRenderer.propTypes = {
   route: PropTypes.string.isRequired,
 };
 
-const initialIncomeStreams = [
-  {
-    id: 'seed-income-1',
-    name: 'Product Design Salary',
-    amountCents: 420_000,
-    frequency: 'Semi-monthly',
-    nextExpectedDate: '2025-11-15',
-  },
-  {
-    id: 'seed-income-2',
-    name: 'Freelance UX Retainer',
-    amountCents: 120_000,
-    frequency: 'Monthly',
-    nextExpectedDate: '2025-12-01',
-  },
-];
-
-const initialTransactions = [
-  {
-    id: 'seed-transaction-1',
-    category: 'Groceries',
-    amountCents: -14532,
-    merchant: 'Whole Foods',
-    transactionDate: '2025-11-01',
-  },
-  {
-    id: 'seed-transaction-2',
-    category: 'Salary',
-    amountCents: 210000,
-    merchant: 'Brightside Studios',
-    transactionDate: '2025-11-01',
-  },
-];
-
 const Section = ({ title, description, children }) => (
   <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     <header className="mb-4">

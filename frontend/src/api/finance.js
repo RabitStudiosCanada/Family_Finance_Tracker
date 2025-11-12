@@ -6,9 +6,49 @@ export const fetchCreditCards = (token) =>
     token,
   });
 
+export const createCreditCard = (token, payload) =>
+  apiFetch('/credit-cards', {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const updateCreditCard = (token, cardId, payload) =>
+  apiFetch(`/credit-cards/${cardId}`, {
+    method: 'PATCH',
+    token,
+    body: payload,
+  });
+
+export const archiveCreditCard = (token, cardId) =>
+  apiFetch(`/credit-cards/${cardId}/archive`, {
+    method: 'PATCH',
+    token,
+  });
+
 export const fetchIncomeStreams = (token) =>
   apiFetch('/income-streams', {
     method: 'GET',
+    token,
+  });
+
+export const createIncomeStream = (token, payload) =>
+  apiFetch('/income-streams', {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const updateIncomeStream = (token, streamId, payload) =>
+  apiFetch(`/income-streams/${streamId}`, {
+    method: 'PATCH',
+    token,
+    body: payload,
+  });
+
+export const archiveIncomeStream = (token, streamId) =>
+  apiFetch(`/income-streams/${streamId}/archive`, {
+    method: 'PATCH',
     token,
   });
 
