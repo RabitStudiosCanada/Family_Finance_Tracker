@@ -39,8 +39,8 @@ Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm 
 **Backend:**
 
 - Node.js 20+ / Express 4
-- PostgreSQL 16
 - Knex.js (query builder + migrations)
+- SQLite (default) or PostgreSQL (via configuration)
 - JWT authentication (jsonwebtoken + bcrypt)
 - node-cron (scheduled tasks for cycle rollovers)
 - Nodemailer (email notifications)
@@ -55,12 +55,13 @@ Each workspace exposes its own scripts (`npm run dev --workspace backend`, `npm 
 - Recharts (data visualization)
 - date-fns (date manipulation)
 
-**Infrastructure:**
+**Infrastructure & Deployment:**
 
-- Docker + Docker Compose
-- Nginx (reverse proxy, SSL termination)
-- Let's Encrypt SSL certificates
-- Self-hosted deployment model
+- npm workspaces monorepo
+- Runs as two Node.js processes (API + Vite dev server/build output)
+- Ships with SQLite database files inside `backend/db`
+- Supports external PostgreSQL when `DATABASE_CLIENT=pg`
+- Production deployment guidance in [`docs/deployment.md`](docs/deployment.md)
 
 **Currency & Regional Settings:**
 
@@ -731,121 +732,39 @@ Actual payments made to credit cards
 
 ## 🚀 Deployment
 
-### Docker Compose Setup
+### Server Setup Overview
 
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: familyfinance
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    networks:
-      - backend
+The repository does **not** include Docker or container manifests. Production deployments run the backend API as a Node.js service and serve the compiled frontend as static assets (for example, behind Nginx). A high-level checklist:
 
-  api:
-    build: ./backend
-    depends_on:
-      - postgres
-    environment:
-      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@postgres:5432/familyfinance
-      JWT_SECRET: ${JWT_SECRET}
-      NODE_ENV: production
-    networks:
-      - backend
-      - frontend
+1. Install Node.js 20.x and npm 10.x on the target host.
+2. Clone the repository and install dependencies with `npm install` (from the repo root).
+3. Copy `backend/.env.example` to `backend/.env` and provide production values (see below).
+4. Run database migrations with `npm run migrate --workspace backend`.
+5. Build the frontend with `npm run build --workspace frontend` (outputs to `frontend/dist`).
+6. Run the backend API with `npm run start --workspace backend` (or under a process manager such as PM2/systemd).
+7. Serve `frontend/dist` via your preferred web server and configure it to proxy API requests to the backend.
 
-  web:
-    build: ./frontend
-    depends_on:
-      - api
-    networks:
-      - frontend
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - '80:80'
-      - '443:443'
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    depends_on:
-      - web
-      - api
-    networks:
-      - frontend
-
-volumes:
-  pgdata:
-
-networks:
-  frontend:
-  backend:
-```
-
-### Initial Setup
-
-```bash
-# Clone repo
-git clone <your-repo-url>
-cd familyfinance
-
-# Copy environment template
-cp .env.example .env
-
-# Edit with your settings
-nano .env
-
-# Generate JWT secret
-openssl rand -base64 32
-
-# Start services
-docker-compose up -d
-
-# Run migrations
-docker-compose exec api npm run migrate:latest
-
-# Create admin account
-docker-compose exec api npm run seed:admin
-
-# Setup SSL (if using domain)
-docker-compose run --rm certbot certonly --webroot \
-  -w /var/www/certbot \
-  -d yourdomain.com
-```
+The [`docs/deployment.md`](docs/deployment.md) guide covers an end-to-end Ubuntu server example, including optional systemd units and Nginx configuration snippets.
 
 ### Environment Variables
 
-```bash
-# Database
-DB_PASSWORD=<strong-password>
-DATABASE_URL=postgres://postgres:${DB_PASSWORD}@postgres:5432/familyfinance
+The backend reads environment variables from `backend/.env`. The table below lists the supported configuration keys (defaults reflect `.env.example`).
 
-# Auth
-JWT_SECRET=<generated-secret>
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+| Variable                 | Description                                                    | Default                    |
+| ------------------------ | -------------------------------------------------------------- | -------------------------- |
+| `NODE_ENV`               | Runtime environment (`development`, `test`, `production`)      | `production`               |
+| `PORT`                   | API listening port                                             | `4000`                     |
+| `LOG_LEVEL`              | Log level (`fatal`, `error`, `warn`, `info`, `debug`, `trace`) | `info`                     |
+| `CORS_ORIGIN`            | Allowed origins (comma-separated) or `*`                       | `http://localhost:5173`    |
+| `DATABASE_CLIENT`        | `sqlite3` (default) or `pg`                                    | `sqlite3`                  |
+| `DATABASE_URL`           | Path to SQLite file or PostgreSQL connection string            | _(empty)_                  |
+| `JWT_ACCESS_SECRET`      | Secret for access tokens (required in production)              | `change-me-access-secret`  |
+| `JWT_REFRESH_SECRET`     | Secret for refresh tokens (required in production)             | `change-me-refresh-secret` |
+| `JWT_ACCESS_EXPIRES_IN`  | Access token TTL (e.g. `15m`, `1h`)                            | `15m`                      |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token TTL                                              | `7d`                       |
+| `BCRYPT_SALT_ROUNDS`     | Cost factor for password hashing                               | `10`                       |
 
-# App
-NODE_ENV=production
-PORT=3000
-FRONTEND_URL=https://yourdomain.com
-
-# Email (for notifications)
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=your-email@example.com
-SMTP_PASS=<email-password>
-
-# Web Push (for notifications)
-VAPID_PUBLIC_KEY=<generated>
-VAPID_PRIVATE_KEY=<generated>
-VAPID_EMAIL=your-email@example.com
-```
+> ℹ️ When `DATABASE_CLIENT=sqlite3` and `DATABASE_URL` is omitted, the API stores data in `backend/db/development.sqlite3`. If you switch to PostgreSQL, supply a full connection string (e.g. `postgres://user:pass@host:5432/familyfinance`).
 
 ---
 
