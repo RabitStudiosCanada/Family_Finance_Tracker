@@ -62,6 +62,48 @@ const findByUserId = ({
     .orderBy('transactions.created_at', 'desc');
 };
 
+const calculateCategorySpend = async ({
+  userId,
+  category,
+  startDate,
+  endDate,
+}) => {
+  const normalizedCategory = category?.trim().toLowerCase();
+
+  const result = await db(TABLE_NAME)
+    .where('transactions.user_id', userId)
+    .andWhere('transactions.type', 'expense')
+    .andWhere('transactions.is_pending', false)
+    .modify((query) => {
+      if (startDate) {
+        query.andWhere('transactions.transaction_date', '>=', startDate);
+      }
+
+      if (endDate) {
+        query.andWhere('transactions.transaction_date', '<=', endDate);
+      }
+
+      if (normalizedCategory) {
+        query.andWhereRaw('LOWER(transactions.category) = ?', [
+          normalizedCategory,
+        ]);
+      }
+    })
+    .select(
+      db.raw(
+        `COALESCE(SUM(CASE
+            WHEN transactions.amount_cents < 0 THEN -transactions.amount_cents
+            ELSE transactions.amount_cents
+          END), 0) AS total_spent`
+      )
+    )
+    .first();
+
+  const total = result?.total_spent ?? 0;
+
+  return Number(total);
+};
+
 const findByUserIdWithinDateRange = ({ userId, startDate, endDate, type }) => {
   const query = baseQuery().where('transactions.user_id', userId);
 
@@ -107,6 +149,7 @@ module.exports = {
   findById,
   findByUserId,
   findByUserIdWithinDateRange,
+  calculateCategorySpend,
   create,
   updateById,
   deleteById,

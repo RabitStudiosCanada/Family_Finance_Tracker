@@ -13,6 +13,7 @@ import PaymentCyclesPage from './pages/PaymentCyclesPage.jsx';
 import TransactionsPage from './pages/TransactionsPage.jsx';
 import useHashRoute from './hooks/useHashRoute.js';
 import SavingsGoalsPage from './pages/SavingsGoalsPage.jsx';
+import CategoryBudgetsPage from './pages/CategoryBudgetsPage.jsx';
 
 const ROUTES = {
   overview: OverviewPage,
@@ -20,6 +21,7 @@ const ROUTES = {
   'income-streams': IncomeStreamsPage,
   transactions: TransactionsPage,
   'payment-cycles': PaymentCyclesPage,
+  'category-budgets': CategoryBudgetsPage,
   'savings-goals': SavingsGoalsPage,
   'projected-expenses': ProjectedExpensesPage,
 };

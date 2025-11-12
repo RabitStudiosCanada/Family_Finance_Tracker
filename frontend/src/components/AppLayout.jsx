@@ -8,6 +8,7 @@ const navigation = [
   { id: 'income-streams', label: 'Income Streams' },
   { id: 'transactions', label: 'Transactions' },
   { id: 'payment-cycles', label: 'Payment Cycles' },
+  { id: 'category-budgets', label: 'Category Budgets' },
   { id: 'savings-goals', label: 'Savings Goals' },
   { id: 'projected-expenses', label: 'Projected Expenses' },
 ];

@@ -146,6 +146,23 @@ export const createProjectedExpense = (token, payload) =>
     body: payload,
   });
 
+export const fetchProjectedExpenseTemplates = (token) =>
+  apiFetch('/projected-expenses/templates', {
+    method: 'GET',
+    token,
+  });
+
+export const createProjectedExpenseFromTemplate = (
+  token,
+  templateId,
+  payload = {}
+) =>
+  apiFetch(`/projected-expenses/templates/${templateId}`, {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
 export const updateProjectedExpense = (token, expenseId, payload) =>
   apiFetch(`/projected-expenses/${expenseId}`, {
     method: 'PATCH',
@@ -175,6 +192,70 @@ export const cancelProjectedExpense = (token, expenseId, payload = {}) =>
 
 export const deleteProjectedExpense = (token, expenseId) =>
   apiFetch(`/projected-expenses/${expenseId}`, {
+    method: 'DELETE',
+    token,
+  });
+
+export const fetchCategoryBudgets = (token, params = {}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params.userId) {
+    searchParams.set('userId', params.userId);
+  }
+
+  if (params.includeInactive !== undefined) {
+    searchParams.set('includeInactive', String(params.includeInactive));
+  }
+
+  const query = searchParams.toString();
+  const suffix = query ? `?${query}` : '';
+
+  return apiFetch(`/category-budgets${suffix}`, {
+    method: 'GET',
+    token,
+  });
+};
+
+export const fetchCategoryBudgetSummaries = (token, params = {}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params.userId) {
+    searchParams.set('userId', params.userId);
+  }
+
+  if (params.includeInactive !== undefined) {
+    searchParams.set('includeInactive', String(params.includeInactive));
+  }
+
+  if (params.referenceDate) {
+    searchParams.set('referenceDate', params.referenceDate);
+  }
+
+  const query = searchParams.toString();
+  const suffix = query ? `?${query}` : '';
+
+  return apiFetch(`/category-budgets/summary${suffix}`, {
+    method: 'GET',
+    token,
+  });
+};
+
+export const createCategoryBudget = (token, payload) =>
+  apiFetch('/category-budgets', {
+    method: 'POST',
+    token,
+    body: payload,
+  });
+
+export const updateCategoryBudget = (token, budgetId, payload) =>
+  apiFetch(`/category-budgets/${budgetId}`, {
+    method: 'PATCH',
+    token,
+    body: payload,
+  });
+
+export const deleteCategoryBudget = (token, budgetId) =>
+  apiFetch(`/category-budgets/${budgetId}`, {
     method: 'DELETE',
     token,
   });

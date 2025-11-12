@@ -8,6 +8,12 @@ const listProjectedExpenses = async (req, res) => {
   return response.ok(res, { data: { projectedExpenses } });
 };
 
+const listProjectedExpenseTemplates = async (req, res) => {
+  const templates = projectedExpensesService.listProjectedExpenseTemplates();
+
+  return response.ok(res, { data: { templates } });
+};
+
 const getProjectedExpense = async (req, res) => {
   const projectedExpense = await projectedExpensesService.getProjectedExpense(
     req.user,
@@ -20,6 +26,17 @@ const getProjectedExpense = async (req, res) => {
 const createProjectedExpense = async (req, res) => {
   const projectedExpense =
     await projectedExpensesService.createProjectedExpense(req.user, req.body);
+
+  return response.created(res, { data: { projectedExpense } });
+};
+
+const createProjectedExpenseFromTemplate = async (req, res) => {
+  const projectedExpense =
+    await projectedExpensesService.createProjectedExpenseFromTemplate(
+      req.user,
+      req.params.templateId,
+      req.body
+    );
 
   return response.created(res, { data: { projectedExpense } });
 };
@@ -78,8 +95,10 @@ const deleteProjectedExpense = async (req, res) => {
 
 module.exports = {
   listProjectedExpenses,
+  listProjectedExpenseTemplates,
   getProjectedExpense,
   createProjectedExpense,
+  createProjectedExpenseFromTemplate,
   updateProjectedExpense,
   commitProjectedExpense,
   markProjectedExpensePaid,

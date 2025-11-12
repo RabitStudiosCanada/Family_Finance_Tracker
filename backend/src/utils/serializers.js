@@ -103,6 +103,18 @@ const serializeProjectedExpense = (expense) =>
     updatedAt: expense.updated_at,
   });
 
+const serializeProjectedExpenseTemplate = (template) =>
+  pickDefined({
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    defaultCategory: template.defaultCategory,
+    defaultAmountCents: template.defaultAmountCents,
+    defaultExpectedDayOffset: template.defaultExpectedDayOffset,
+    defaultNotes: template.defaultNotes,
+    tags: template.tags,
+  });
+
 const serializeSavingsGoal = (goal) =>
   pickDefined({
     id: goal.id,
@@ -154,6 +166,22 @@ const serializeCategoryBudget = (budget) =>
     isActive: Boolean(budget.is_active),
     createdAt: budget.created_at,
     updatedAt: budget.updated_at,
+  });
+
+const serializeCategoryBudgetSummary = (budget) =>
+  pickDefined({
+    ...serializeCategoryBudget(budget),
+    warningThreshold:
+      budget.warning_threshold !== undefined &&
+      budget.warning_threshold !== null
+        ? Number(budget.warning_threshold)
+        : undefined,
+    periodStartDate: budget.period_start_date,
+    periodEndDate: budget.period_end_date,
+    spentAmountCents: budget.spent_amount_cents,
+    remainingAmountCents: budget.remaining_amount_cents,
+    utilisation: budget.utilisation,
+    status: budget.status,
   });
 
 const serializeAgencySnapshot = (snapshot) =>
@@ -217,9 +245,11 @@ module.exports = {
   serializeIncomeStream,
   serializeTransaction,
   serializeProjectedExpense,
+  serializeProjectedExpenseTemplate,
   serializeSavingsGoal,
   serializeSavingsContribution,
   serializeCategoryBudget,
+  serializeCategoryBudgetSummary,
   serializeAgencySnapshot,
   serializePaymentCycle,
 };

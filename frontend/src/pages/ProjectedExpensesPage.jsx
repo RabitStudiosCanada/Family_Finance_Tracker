@@ -8,9 +8,11 @@ import {
   cancelProjectedExpense,
   commitProjectedExpense,
   createProjectedExpense,
+  createProjectedExpenseFromTemplate,
   deleteProjectedExpense,
   fetchCreditCards,
   fetchProjectedExpenses,
+  fetchProjectedExpenseTemplates,
   markProjectedExpensePaid,
   updateProjectedExpense,
 } from '../api/finance';
@@ -77,6 +79,22 @@ const STATUS_META = {
   },
 };
 
+const addDays = (date, days) =>
+  new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+
+const computeTemplateExpectedDate = (template) => {
+  const now = new Date();
+  const startOfDay = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  const offset = Number.isFinite(template?.defaultExpectedDayOffset)
+    ? template.defaultExpectedDayOffset
+    : 0;
+  const target = addDays(startOfDay, offset);
+
+  return target.toISOString().slice(0, 10);
+};
+
 const FILTERS = [
   {
     id: 'active',
@@ -131,6 +149,14 @@ const buildFormInitialValues = (expense) => ({
   creditCardId: expense?.creditCardId ?? '',
   notes: expense?.notes ?? '',
 });
+
+const buildTemplateInitialValues = (template) =>
+  buildFormInitialValues({
+    category: template.defaultCategory,
+    amountCents: template.defaultAmountCents,
+    expectedDate: computeTemplateExpectedDate(template),
+    notes: template.defaultNotes ?? '',
+  });
 
 function ProjectedExpenseForm({
   initialValues,
@@ -327,11 +353,15 @@ export default function ProjectedExpensesPage() {
   const [editStatus, setEditStatus] = useState('idle');
   const [transitionType, setTransitionType] = useState(null);
   const [transitionError, setTransitionError] = useState(null);
+  const [createInitialValues, setCreateInitialValues] = useState(() =>
+    buildFormInitialValues()
+  );
+  const [templateNotice, setTemplateNotice] = useState(null);
+  const [templateErrorMessage, setTemplateErrorMessage] = useState(null);
+  const [templateSubmittingId, setTemplateSubmittingId] = useState(null);
 
   const activeFilter =
     FILTERS.find((filter) => filter.id === filterId) ?? FILTERS[0];
-
-  const emptyFormValues = useMemo(() => buildFormInitialValues(), []);
 
   const expensesQuery = useQuery({
     queryKey: ['projectedExpenses', accessToken, activeFilter.id],
@@ -348,7 +378,15 @@ export default function ProjectedExpensesPage() {
     enabled: Boolean(accessToken),
   });
 
+  const templatesQuery = useQuery({
+    queryKey: ['projectedExpenseTemplates', accessToken],
+    queryFn: () => fetchProjectedExpenseTemplates(accessToken),
+    enabled: Boolean(accessToken),
+    staleTime: 120_000,
+  });
+
   const creditCards = creditCardsQuery.data?.creditCards ?? [];
+  const templates = templatesQuery.data?.templates ?? [];
 
   const expenses = useMemo(() => {
     const items = expensesQuery.data?.projectedExpenses ?? [];
@@ -368,6 +406,46 @@ export default function ProjectedExpensesPage() {
     ? (creditCards.find((card) => card.id === selectedExpense.creditCardId) ??
       null)
     : null;
+
+  const handlePlanTemplate = (template) => {
+    if (!template) {
+      return;
+    }
+
+    setCreateInitialValues(buildTemplateInitialValues(template));
+    setIsCreateOpen(true);
+    setCreateError(null);
+    setTemplateNotice(null);
+    setTemplateErrorMessage(null);
+  };
+
+  const handleQuickAddTemplate = async (template) => {
+    if (!template || !accessToken) {
+      return;
+    }
+
+    setTemplateSubmittingId(template.id);
+    setTemplateNotice(null);
+    setTemplateErrorMessage(null);
+
+    try {
+      await createProjectedExpenseFromTemplate(accessToken, template.id, {
+        expectedDate: computeTemplateExpectedDate(template),
+      });
+      await expensesQuery.refetch();
+      setTemplateNotice(`${template.name} added to your plan.`);
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Unable to quick add this template.';
+      setTemplateErrorMessage(message);
+    } finally {
+      setTemplateSubmittingId(null);
+    }
+  };
 
   const handleCloseDetail = () => {
     setSelectedExpenseId(null);
@@ -561,6 +639,9 @@ export default function ProjectedExpensesPage() {
         <button
           type="button"
           onClick={() => {
+            setCreateInitialValues(buildFormInitialValues());
+            setTemplateNotice(null);
+            setTemplateErrorMessage(null);
             setIsCreateOpen(true);
             setCreateError(null);
           }}
@@ -568,6 +649,75 @@ export default function ProjectedExpensesPage() {
         >
           Plan projected expense
         </button>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-slate-900">
+            Quick templates
+          </p>
+          <p className="text-xs text-slate-500">
+            Use a template to prefill frequent obligations or add them
+            instantly.
+          </p>
+        </div>
+        {templatesQuery.isLoading ? (
+          <p className="text-xs text-slate-500">Loading templates…</p>
+        ) : templates.length ? (
+          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap">
+            {templates.map((template) => {
+              const isSubmitting = templateSubmittingId === template.id;
+
+              return (
+                <div
+                  key={template.id}
+                  className="flex min-w-[240px] flex-1 flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {template.name}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {template.description}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-500">
+                      {template.defaultCategory} •{' '}
+                      {formatCurrency(template.defaultAmountCents)}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePlanTemplate(template)}
+                      className="inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                    >
+                      Plan with template
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickAddTemplate(template)}
+                      disabled={isSubmitting}
+                      className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isSubmitting ? 'Adding…' : 'Quick add'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-xs text-slate-500">
+            No templates available yet. Create projections manually to start
+            building patterns.
+          </p>
+        )}
+        {templateNotice ? (
+          <p className="text-xs text-emerald-600">{templateNotice}</p>
+        ) : null}
+        {templateErrorMessage ? (
+          <p className="text-xs text-rose-600">{templateErrorMessage}</p>
+        ) : null}
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -656,7 +806,7 @@ export default function ProjectedExpensesPage() {
         footer={null}
       >
         <ProjectedExpenseForm
-          initialValues={emptyFormValues}
+          initialValues={createInitialValues}
           onSubmit={handleCreateSubmit}
           submitLabel="Save projection"
           isSubmitting={isCreating}
