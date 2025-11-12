@@ -986,22 +986,22 @@ npm run seed:demo
   - [x] Add future/planned expenses
   - [x] Mark as actual when purchased (status transitions)
   - [x] Factor into agency calculation
-  - [ ] Grocery list template (common categories)
+  - [x] Grocery list template (common categories)
 - [x] Savings goals (adult/family only for now)
   - [x] Create goal with target amount
   - [x] Manual contributions
-  - [ ] Progress visualization (frontend)
+  - [x] Progress visualization (frontend)
   - [x] Goal completion flow
   - [x] Abandonment with explanation form
 - [x] Enhanced agency calculation
   - [x] Factor in projected expenses
   - [x] Factor in savings commitments
   - [x] Show "safe to spend" vs "technically available"
-- [ ] Category budgeting
+- [x] Category budgeting
   - [x] Set monthly budget per category (API)
-  - [ ] Track spending vs. budget
-  - [ ] Visual progress bars
-  - [ ] Warning when approaching category limit
+  - [x] Track spending vs. budget
+  - [x] Visual progress bars
+  - [x] Warning when approaching category limit
 
 **Deliverable:** Adults can plan ahead, save intentionally, and see future obligations impact current agency
 
