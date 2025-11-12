@@ -4,6 +4,7 @@ import { useQuery } from '../hooks/useQuery';
 import MetricCard from '../components/MetricCard.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import QuickAddTransaction from '../components/QuickAddTransaction.jsx';
+import ProgressBar from '../components/ProgressBar.jsx';
 import { useAuth } from '../providers/AuthProvider.jsx';
 import {
   fetchAgencySnapshots,
@@ -12,6 +13,7 @@ import {
   fetchPaymentCycles,
   fetchProjectedExpenses,
   fetchTransactions,
+  fetchSavingsGoals,
 } from '../api/finance';
 import {
   formatCurrency,
@@ -112,6 +114,13 @@ export default function OverviewPage() {
     staleTime: 30_000,
   });
 
+  const savingsGoalsQuery = useQuery({
+    queryKey: ['savingsGoals', accessToken, 'overview'],
+    queryFn: () => fetchSavingsGoals(accessToken, { status: 'active' }),
+    enabled: Boolean(accessToken),
+    staleTime: 30_000,
+  });
+
   const transactionsQuery = useQuery({
     queryKey: ['transactions', accessToken],
     queryFn: () => fetchTransactions(accessToken, { type: 'expense' }),
@@ -164,6 +173,23 @@ export default function OverviewPage() {
       })
       .slice(0, 4);
   }, [projectedExpensesQuery.data]);
+
+  const topSavingsGoals = useMemo(() => {
+    const goals = savingsGoalsQuery.data?.savingsGoals ?? [];
+
+    return [...goals]
+      .sort((a, b) => {
+        const aPercent = a.targetAmountCents
+          ? a.totalContributionsCents / a.targetAmountCents
+          : 0;
+        const bPercent = b.targetAmountCents
+          ? b.totalContributionsCents / b.targetAmountCents
+          : 0;
+
+        return bPercent - aPercent;
+      })
+      .slice(0, 3);
+  }, [savingsGoalsQuery.data]);
 
   const totalCreditLimit = useMemo(() => {
     const cards = creditCardsQuery.data?.creditCards ?? [];
@@ -251,6 +277,73 @@ export default function OverviewPage() {
             <p className="text-sm text-slate-600">
               No warnings triggered. You have healthy backed agency and credit
               headroom.
+            </p>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Top savings goals
+            </h2>
+            <p className="text-sm text-slate-600">
+              Track progress across your most-funded active goals.
+            </p>
+          </header>
+          {savingsGoalsQuery.isLoading ? (
+            <p className="text-sm text-slate-500">Loading savings goals…</p>
+          ) : topSavingsGoals.length ? (
+            <ul className="space-y-4">
+              {topSavingsGoals.map((goal) => {
+                const percent = goal.targetAmountCents
+                  ? Math.min(
+                      100,
+                      Math.round(
+                        (goal.totalContributionsCents /
+                          goal.targetAmountCents) *
+                          100
+                      )
+                    )
+                  : 0;
+                const tone =
+                  percent >= 100
+                    ? 'success'
+                    : percent >= 75
+                      ? 'warning'
+                      : 'primary';
+
+                return (
+                  <li
+                    key={goal.id}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {goal.name}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Target {formatCurrency(goal.targetAmountCents)} •
+                          Saved {formatCurrency(goal.totalContributionsCents)}
+                        </p>
+                      </div>
+                      {goal.targetDate ? (
+                        <p className="text-xs font-medium text-slate-500">
+                          {formatDate(goal.targetDate)}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="mt-3">
+                      <ProgressBar percent={percent} tone={tone} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-500">
+              No active savings goals yet. Create one to start tracking
+              progress.
             </p>
           )}
         </section>

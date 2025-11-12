@@ -165,6 +165,10 @@ const deleteContributionSchema = z.object({
   }),
 });
 
+const listContributionsSchema = z.object({
+  params: z.object({ id: z.string().uuid() }),
+});
+
 const categoryBudgetPayload = z.object({
   userId: z.string().uuid().optional(),
   category: z.string().trim().min(1).max(120),
@@ -229,6 +233,7 @@ module.exports = {
   abandonSavingsGoalSchema,
   addContributionSchema,
   deleteContributionSchema,
+  listContributionsSchema,
   listCategoryBudgetsSchema,
   createCategoryBudgetSchema,
   updateCategoryBudgetSchema,
