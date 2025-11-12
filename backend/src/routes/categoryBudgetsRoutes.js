@@ -4,6 +4,7 @@ const categoryBudgetsController = require('../controllers/categoryBudgetsControl
 const validateRequest = require('../middleware/validateRequest');
 const {
   listCategoryBudgetsSchema,
+  listCategoryBudgetSummariesSchema,
   createCategoryBudgetSchema,
   updateCategoryBudgetSchema,
   deleteCategoryBudgetSchema,
@@ -11,6 +12,11 @@ const {
 
 const router = Router();
 
+router.get(
+  '/summary',
+  validateRequest(listCategoryBudgetSummariesSchema),
+  categoryBudgetsController.listCategoryBudgetSummaries
+);
 router.get(
   '/',
   validateRequest(listCategoryBudgetsSchema),

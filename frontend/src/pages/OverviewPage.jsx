@@ -14,6 +14,7 @@ import {
   fetchProjectedExpenses,
   fetchTransactions,
   fetchSavingsGoals,
+  fetchCategoryBudgetSummaries,
 } from '../api/finance';
 import {
   formatCurrency,
@@ -73,8 +74,30 @@ const metricsConfig = (snapshot) => {
   ];
 };
 
+const budgetStatusMeta = {
+  ok: {
+    label: 'On track',
+    badgeClass: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    tone: 'success',
+  },
+  warning: {
+    label: 'Approaching limit',
+    badgeClass: 'border-amber-200 bg-amber-50 text-amber-700',
+    tone: 'warning',
+  },
+  over: {
+    label: 'Over limit',
+    badgeClass: 'border-rose-200 bg-rose-50 text-rose-700',
+    tone: 'danger',
+  },
+};
+
 export default function OverviewPage() {
   const { accessToken } = useAuth();
+  const todayReference = useMemo(() => {
+    const now = new Date();
+    return now.toISOString().slice(0, 10);
+  }, []);
 
   const agencyQuery = useQuery({
     queryKey: ['agencySnapshots', accessToken],
@@ -128,17 +151,64 @@ export default function OverviewPage() {
     staleTime: 30_000,
   });
 
+  const budgetSummariesQuery = useQuery({
+    queryKey: ['categoryBudgetSummaries', accessToken, todayReference],
+    queryFn: () =>
+      fetchCategoryBudgetSummaries(accessToken, {
+        referenceDate: todayReference,
+      }),
+    enabled: Boolean(accessToken),
+    staleTime: 30_000,
+  });
+
   const { refetch: refetchAgency } = agencyQuery;
   const { refetch: refetchExpenses } = transactionsQuery;
+  const { refetch: refetchBudgets } = budgetSummariesQuery;
 
   const handleQuickAddSuccess = () => {
     refetchExpenses();
     refetchAgency();
+    refetchBudgets();
   };
 
   const latestSnapshot = agencyQuery.data?.snapshots?.[0] ?? null;
   const metrics = metricsConfig(latestSnapshot);
-  const warnings = latestSnapshot?.warnings ?? [];
+  const agencyWarnings = useMemo(
+    () => latestSnapshot?.warnings ?? [],
+    [latestSnapshot]
+  );
+  const budgetWarnings = useMemo(() => {
+    const budgets = budgetSummariesQuery.data?.categoryBudgets ?? [];
+
+    if (!budgets.length) {
+      return [];
+    }
+
+    return budgets
+      .filter(
+        (budget) => budget.status === 'warning' || budget.status === 'over'
+      )
+      .map((budget) => {
+        const percent = Math.round((budget.utilisation ?? 0) * 100);
+        const threshold = Math.round((budget.warningThreshold ?? 0.85) * 100);
+
+        return {
+          type: 'categoryBudget',
+          level: budget.status === 'over' ? 'critical' : 'warning',
+          message:
+            budget.status === 'over'
+              ? `${budget.category} budget is over its limit.`
+              : `${budget.category} spending is at ${percent}% of its limit.`,
+          percent,
+          threshold,
+          category: budget.category,
+        };
+      });
+  }, [budgetSummariesQuery.data?.categoryBudgets]);
+  const warnings = useMemo(
+    () => [...agencyWarnings, ...budgetWarnings],
+    [agencyWarnings, budgetWarnings]
+  );
 
   const nextPayment = useMemo(() => {
     const cycles = paymentCyclesQuery.data?.paymentCycles ?? [];
@@ -201,6 +271,18 @@ export default function OverviewPage() {
     return streams.reduce((sum, stream) => sum + (stream.amountCents ?? 0), 0);
   }, [incomeStreamsQuery.data]);
 
+  const budgetsForOverview = useMemo(() => {
+    const budgets = budgetSummariesQuery.data?.categoryBudgets ?? [];
+
+    if (!budgets.length) {
+      return [];
+    }
+
+    return [...budgets]
+      .sort((a, b) => (b.utilisation ?? 0) - (a.utilisation ?? 0))
+      .slice(0, 3);
+  }, [budgetSummariesQuery.data?.categoryBudgets]);
+
   return (
     <div>
       <PageHeader
@@ -257,11 +339,13 @@ export default function OverviewPage() {
                 const descriptor =
                   warning.type === 'backedAgency'
                     ? 'Backed agency coverage'
-                    : 'Credit utilization';
+                    : warning.type === 'creditUtilization'
+                      ? 'Credit utilization'
+                      : 'Category budget';
 
                 return (
                   <li
-                    key={`${warning.type}-${warning.threshold}`}
+                    key={`${warning.type}-${warning.category ?? warning.threshold}`}
                     className={`rounded-xl border p-4 shadow-sm ${toneClass}`}
                   >
                     <p className="text-sm font-semibold">{warning.message}</p>
@@ -277,6 +361,67 @@ export default function OverviewPage() {
             <p className="text-sm text-slate-600">
               No warnings triggered. You have healthy backed agency and credit
               headroom.
+            </p>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Budget utilisation watchlist
+            </h2>
+            <p className="text-sm text-slate-600">
+              Monitor the categories using the most of their budgeted limits.
+            </p>
+          </header>
+          {budgetSummariesQuery.isLoading ? (
+            <p className="text-sm text-slate-500">Loading budget summaries…</p>
+          ) : budgetsForOverview.length ? (
+            <ul className="space-y-4">
+              {budgetsForOverview.map((budget) => {
+                const percent = Math.round((budget.utilisation ?? 0) * 100);
+                const progressPercent = Math.min(percent, 100);
+                const meta =
+                  budgetStatusMeta[budget.status] || budgetStatusMeta.ok;
+
+                return (
+                  <li
+                    key={budget.id}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {budget.category}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Spent {formatCurrency(budget.spentAmountCents)} of{' '}
+                          {formatCurrency(budget.limitAmountCents)}
+                        </p>
+                      </div>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${meta.badgeClass}`}
+                      >
+                        {meta.label}
+                      </span>
+                    </div>
+                    <div className="mt-3">
+                      <ProgressBar percent={progressPercent} tone={meta.tone} />
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">
+                      Remaining{' '}
+                      {formatCurrency(budget.remainingAmountCents ?? 0)} •
+                      Warning at{' '}
+                      {Math.round((budget.warningThreshold ?? 0.85) * 100)}%
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-500">
+              No category budgets configured yet. Create one to track
+              utilisation here.
             </p>
           )}
         </section>

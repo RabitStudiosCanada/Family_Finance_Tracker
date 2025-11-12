@@ -4,8 +4,10 @@ const projectedExpensesController = require('../controllers/projectedExpensesCon
 const validateRequest = require('../middleware/validateRequest');
 const {
   listProjectedExpensesSchema,
+  listProjectedExpenseTemplatesSchema,
   getProjectedExpenseSchema,
   createProjectedExpenseSchema,
+  createProjectedExpenseFromTemplateSchema,
   updateProjectedExpenseSchema,
   commitProjectedExpenseSchema,
   markProjectedExpensePaidSchema,
@@ -20,10 +22,20 @@ router.get(
   validateRequest(listProjectedExpensesSchema),
   projectedExpensesController.listProjectedExpenses
 );
+router.get(
+  '/templates',
+  validateRequest(listProjectedExpenseTemplatesSchema),
+  projectedExpensesController.listProjectedExpenseTemplates
+);
 router.post(
   '/',
   validateRequest(createProjectedExpenseSchema),
   projectedExpensesController.createProjectedExpense
+);
+router.post(
+  '/templates/:templateId',
+  validateRequest(createProjectedExpenseFromTemplateSchema),
+  projectedExpensesController.createProjectedExpenseFromTemplate
 );
 router.get(
   '/:id',

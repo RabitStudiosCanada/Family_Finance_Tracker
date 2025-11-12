@@ -42,6 +42,10 @@ const listProjectedExpensesSchema = z.object({
     .default({}),
 });
 
+const listProjectedExpenseTemplatesSchema = z.object({
+  query: z.object({}).default({}),
+});
+
 const getProjectedExpenseSchema = z.object({
   params: z.object({
     id: z.string().uuid(),
@@ -73,6 +77,21 @@ const markProjectedExpensePaidSchema = z.object({
   body: z
     .object({
       transactionId: z.string().uuid().nullable().optional(),
+    })
+    .default({}),
+});
+
+const createProjectedExpenseFromTemplateSchema = z.object({
+  params: z.object({ templateId: z.string().min(1) }),
+  body: z
+    .object({
+      userId: z.string().uuid().optional(),
+      expectedDate: isoDateString.optional(),
+      referenceDate: isoDateString.optional(),
+      amountCents: z.coerce.number().int().positive().optional(),
+      category: z.string().trim().min(1).max(120).optional(),
+      notes: z.string().trim().max(500).optional(),
+      creditCardId: z.string().uuid().optional(),
     })
     .default({}),
 });
@@ -193,6 +212,16 @@ const listCategoryBudgetsSchema = z.object({
     .default({}),
 });
 
+const listCategoryBudgetSummariesSchema = z.object({
+  query: z
+    .object({
+      userId: z.string().uuid().optional(),
+      includeInactive: booleanString.optional(),
+      referenceDate: isoDateString.optional(),
+    })
+    .default({}),
+});
+
 const createCategoryBudgetSchema = z.object({
   body: categoryBudgetPayload,
 });
@@ -218,8 +247,10 @@ const deleteCategoryBudgetSchema = z.object({
 
 module.exports = {
   listProjectedExpensesSchema,
+  listProjectedExpenseTemplatesSchema,
   getProjectedExpenseSchema,
   createProjectedExpenseSchema,
+  createProjectedExpenseFromTemplateSchema,
   updateProjectedExpenseSchema,
   commitProjectedExpenseSchema,
   markProjectedExpensePaidSchema,
@@ -235,6 +266,7 @@ module.exports = {
   deleteContributionSchema,
   listContributionsSchema,
   listCategoryBudgetsSchema,
+  listCategoryBudgetSummariesSchema,
   createCategoryBudgetSchema,
   updateCategoryBudgetSchema,
   deleteCategoryBudgetSchema,

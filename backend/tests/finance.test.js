@@ -549,6 +549,57 @@ describe('Finance API', () => {
         .first();
     });
 
+    it('lists reusable projected expense templates', async () => {
+      const response = await request(app)
+        .get('/api/projected-expenses/templates')
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.templates.length).toBeGreaterThan(0);
+      response.body.data.templates.forEach((template) => {
+        expect(template).toMatchObject({
+          id: expect.any(String),
+          name: expect.any(String),
+          defaultCategory: expect.any(String),
+          defaultAmountCents: expect.any(Number),
+        });
+      });
+    });
+
+    it('creates projected expenses from templates with overrides', async () => {
+      const templatesResponse = await request(app)
+        .get('/api/projected-expenses/templates')
+        .set('Authorization', `Bearer ${adultToken}`);
+
+      expect(templatesResponse.status).toBe(200);
+
+      const template = templatesResponse.body.data.templates[0];
+      const overrideAmount = template.defaultAmountCents + 1500;
+      const expectedDate = '2025-11-20';
+
+      const createResponse = await request(app)
+        .post(`/api/projected-expenses/templates/${template.id}`)
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({
+          amountCents: overrideAmount,
+          expectedDate,
+          notes: 'Quick add from template',
+        });
+
+      expect(createResponse.status).toBe(201);
+      expect(createResponse.body.data.projectedExpense).toMatchObject({
+        userId: adultUser.id,
+        status: 'planned',
+        category: template.defaultCategory,
+        amountCents: overrideAmount,
+        expectedDate,
+      });
+
+      const createdId = createResponse.body.data.projectedExpense.id;
+
+      await knex('projected_expenses').where({ id: createdId }).del();
+    });
+
     it('lists projected expenses for the authenticated adult', async () => {
       const response = await request(app)
         .get('/api/projected-expenses')
@@ -794,6 +845,70 @@ describe('Finance API', () => {
       response.body.data.categoryBudgets.forEach((budget) => {
         expect(budget.userId).toBe(adultUser.id);
       });
+    });
+
+    it('summarises category budgets with utilisation warnings', async () => {
+      const groceryCreate = await request(app)
+        .post('/api/transactions')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({
+          creditCardId: adultCreditCard.id,
+          type: 'expense',
+          amountCents: -65000,
+          category: 'Groceries',
+          transactionDate: '2025-11-10',
+        });
+
+      const diningCreate = await request(app)
+        .post('/api/transactions')
+        .set('Authorization', `Bearer ${adultToken}`)
+        .send({
+          creditCardId: adultCreditCard.id,
+          type: 'expense',
+          amountCents: -35000,
+          category: 'Dining Out',
+          transactionDate: '2025-11-12',
+        });
+
+      expect(groceryCreate.status).toBe(201);
+      expect(diningCreate.status).toBe(201);
+
+      const groceryId = groceryCreate.body.data.transaction.id;
+      const diningId = diningCreate.body.data.transaction.id;
+
+      try {
+        const response = await request(app)
+          .get('/api/category-budgets/summary')
+          .query({ referenceDate: '2025-11-15' })
+          .set('Authorization', `Bearer ${adultToken}`);
+
+        expect(response.status).toBe(200);
+        const budgets = response.body.data.categoryBudgets;
+        expect(budgets.length).toBeGreaterThan(0);
+
+        const groceriesBudget = budgets.find(
+          (budget) => budget.category === 'Groceries'
+        );
+        const diningBudget = budgets.find(
+          (budget) => budget.category === 'Dining Out'
+        );
+
+        expect(groceriesBudget).toBeDefined();
+        expect(diningBudget).toBeDefined();
+        expect(groceriesBudget.status).toBe('warning');
+        expect(groceriesBudget.utilisation).toBeGreaterThanOrEqual(
+          groceriesBudget.warningThreshold
+        );
+        expect(groceriesBudget.spentAmountCents).toBeGreaterThan(0);
+
+        expect(diningBudget.status).toBe('over');
+        expect(diningBudget.spentAmountCents).toBeGreaterThan(
+          diningBudget.limitAmountCents
+        );
+        expect(diningBudget.remainingAmountCents).toBe(0);
+      } finally {
+        await knex('transactions').whereIn('id', [groceryId, diningId]).del();
+      }
     });
 
     it('creates, updates, and deletes category budgets', async () => {

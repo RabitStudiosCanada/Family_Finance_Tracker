@@ -10,6 +10,15 @@ const listCategoryBudgets = async (req, res) => {
   return response.ok(res, { data: { categoryBudgets } });
 };
 
+const listCategoryBudgetSummaries = async (req, res) => {
+  const summaries = await categoryBudgetsService.listCategoryBudgetSummaries(
+    req.user,
+    req.query
+  );
+
+  return response.ok(res, { data: { categoryBudgets: summaries } });
+};
+
 const createCategoryBudget = async (req, res) => {
   const categoryBudget = await categoryBudgetsService.createCategoryBudget(
     req.user,
@@ -37,6 +46,7 @@ const deleteCategoryBudget = async (req, res) => {
 
 module.exports = {
   listCategoryBudgets,
+  listCategoryBudgetSummaries,
   createCategoryBudget,
   updateCategoryBudget,
   deleteCategoryBudget,

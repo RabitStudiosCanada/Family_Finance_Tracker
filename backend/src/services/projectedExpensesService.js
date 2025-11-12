@@ -3,7 +3,40 @@ const { randomUUID } = require('node:crypto');
 
 const projectedExpensesRepository = require('../repositories/projectedExpensesRepository');
 const usersRepository = require('../repositories/usersRepository');
-const { serializeProjectedExpense } = require('../utils/serializers');
+const {
+  serializeProjectedExpense,
+  serializeProjectedExpenseTemplate,
+} = require('../utils/serializers');
+const templates = require('../config/projectedExpenseTemplates');
+
+const formatDate = (date) => date.toISOString().slice(0, 10);
+
+const addDays = (date, days) =>
+  new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate() + days
+    )
+  );
+
+const parseISODate = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  const [year, month, day] = value.split('-').map(Number);
+
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(day)
+  ) {
+    return null;
+  }
+
+  return new Date(Date.UTC(year, month - 1, day));
+};
 
 const ALLOWED_TRANSITIONS = {
   planned: ['committed', 'cancelled'],
@@ -198,6 +231,88 @@ const cancelProjectedExpense = async (currentUser, id, payload = {}) => {
   return serializeProjectedExpense(updated);
 };
 
+const listProjectedExpenseTemplates = () =>
+  templates.map(serializeProjectedExpenseTemplate);
+
+const resolveTemplateExpectedDate = (template, payload = {}) => {
+  if (payload.expectedDate) {
+    return payload.expectedDate;
+  }
+
+  const reference = parseISODate(payload.referenceDate) || new Date();
+  const offset = Number.isFinite(template.defaultExpectedDayOffset)
+    ? template.defaultExpectedDayOffset
+    : 0;
+
+  return formatDate(addDays(reference, offset));
+};
+
+const resolveTemplateNotes = (template, payload = {}) => {
+  if (payload.notes === null) {
+    return null;
+  }
+
+  if (typeof payload.notes === 'string') {
+    const trimmed = payload.notes.trim();
+    return trimmed || undefined;
+  }
+
+  return template.defaultNotes;
+};
+
+const createProjectedExpenseFromTemplate = async (
+  currentUser,
+  templateId,
+  payload = {}
+) => {
+  const template = templates.find((entry) => entry.id === templateId);
+
+  if (!template) {
+    throw createError(404, 'Projected expense template not found');
+  }
+
+  const targetUserId = await resolveTargetUserId(currentUser, payload.userId);
+  const amountCents =
+    payload.amountCents ?? template.defaultAmountCents ?? undefined;
+
+  if (!Number.isInteger(amountCents) || amountCents <= 0) {
+    throw createError(400, 'Amount must be provided as a positive integer');
+  }
+
+  const category = (payload.category ?? template.defaultCategory ?? '').trim();
+
+  if (!category) {
+    throw createError(400, 'A category is required for this projected expense');
+  }
+
+  const expectedDate = resolveTemplateExpectedDate(template, payload);
+
+  if (!expectedDate) {
+    throw createError(
+      400,
+      'An expected date is required for the projected expense'
+    );
+  }
+
+  const notes = resolveTemplateNotes(template, payload);
+  const id = randomUUID();
+
+  const created = await projectedExpensesRepository.create(
+    toDatabaseExpense({
+      id,
+      userId: targetUserId,
+      amountCents,
+      category,
+      expectedDate,
+      creditCardId: payload.creditCardId,
+      notes,
+      status: 'planned',
+    })
+  );
+
+  return serializeProjectedExpense(created);
+};
+
 const deleteProjectedExpense = async (currentUser, id) => {
   const existing = await projectedExpensesRepository.findById(id);
 
@@ -218,5 +333,7 @@ module.exports = {
   commitProjectedExpense,
   markProjectedExpensePaid,
   cancelProjectedExpense,
+  listProjectedExpenseTemplates,
+  createProjectedExpenseFromTemplate,
   deleteProjectedExpense,
 };
