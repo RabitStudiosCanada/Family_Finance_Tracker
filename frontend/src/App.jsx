@@ -8,6 +8,7 @@ import CreditCardsPage from './pages/CreditCardsPage.jsx';
 import IncomeStreamsPage from './pages/IncomeStreamsPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import OverviewPage from './pages/OverviewPage.jsx';
+import ProjectedExpensesPage from './pages/ProjectedExpensesPage.jsx';
 import PaymentCyclesPage from './pages/PaymentCyclesPage.jsx';
 import TransactionsPage from './pages/TransactionsPage.jsx';
 import useHashRoute from './hooks/useHashRoute.js';
@@ -18,6 +19,7 @@ const ROUTES = {
   'income-streams': IncomeStreamsPage,
   transactions: TransactionsPage,
   'payment-cycles': PaymentCyclesPage,
+  'projected-expenses': ProjectedExpensesPage,
 };
 
 const DEFAULT_ROUTE = 'overview';

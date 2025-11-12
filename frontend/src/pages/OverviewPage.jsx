@@ -10,6 +10,7 @@ import {
   fetchCreditCards,
   fetchIncomeStreams,
   fetchPaymentCycles,
+  fetchProjectedExpenses,
   fetchTransactions,
 } from '../api/finance';
 import {
@@ -17,6 +18,28 @@ import {
   formatDate,
   formatRelativeDays,
 } from '../utils/formatters';
+
+const relativeDaysFromToday = (isoDate) => {
+  if (!isoDate) {
+    return null;
+  }
+
+  const target = new Date(isoDate);
+
+  if (Number.isNaN(target.getTime())) {
+    return null;
+  }
+
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetUtc = Date.UTC(
+    target.getFullYear(),
+    target.getMonth(),
+    target.getDate()
+  );
+
+  return Math.round((targetUtc - todayUtc) / (1000 * 60 * 60 * 24));
+};
 
 const metricsConfig = (snapshot) => {
   if (!snapshot) {
@@ -79,6 +102,16 @@ export default function OverviewPage() {
     staleTime: 30_000,
   });
 
+  const projectedExpensesQuery = useQuery({
+    queryKey: ['projectedExpenses', accessToken, 'overview'],
+    queryFn: () =>
+      fetchProjectedExpenses(accessToken, {
+        statuses: ['planned', 'committed'],
+      }),
+    enabled: Boolean(accessToken),
+    staleTime: 30_000,
+  });
+
   const transactionsQuery = useQuery({
     queryKey: ['transactions', accessToken],
     queryFn: () => fetchTransactions(accessToken, { type: 'expense' }),
@@ -119,6 +152,18 @@ export default function OverviewPage() {
     () => (transactionsQuery.data?.transactions ?? []).slice(0, 5),
     [transactionsQuery.data]
   );
+
+  const upcomingProjections = useMemo(() => {
+    const items = projectedExpensesQuery.data?.projectedExpenses ?? [];
+
+    return [...items]
+      .sort((a, b) => {
+        const first = a.expectedDate ?? '';
+        const second = b.expectedDate ?? '';
+        return first.localeCompare(second);
+      })
+      .slice(0, 4);
+  }, [projectedExpensesQuery.data]);
 
   const totalCreditLimit = useMemo(() => {
     const cards = creditCardsQuery.data?.creditCards ?? [];
@@ -206,6 +251,57 @@ export default function OverviewPage() {
             <p className="text-sm text-slate-600">
               No warnings triggered. You have healthy backed agency and credit
               headroom.
+            </p>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Upcoming projected expenses
+            </h2>
+            <p className="text-sm text-slate-600">
+              Track the next obligations you have planned or committed to.
+            </p>
+          </header>
+          {projectedExpensesQuery.isLoading ? (
+            <p className="text-sm text-slate-500">Loading projections…</p>
+          ) : upcomingProjections.length ? (
+            <ul className="divide-y divide-slate-200">
+              {upcomingProjections.map((expense) => {
+                const relativeDays = relativeDaysFromToday(
+                  expense.expectedDate
+                );
+                const statusLabel =
+                  expense.status === 'committed'
+                    ? 'Committed obligation'
+                    : 'Planned obligation';
+
+                return (
+                  <li key={expense.id} className="py-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          {expense.category}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatDate(expense.expectedDate)} •{' '}
+                          {formatRelativeDays(relativeDays)}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-slate-900">
+                        {formatCurrency(expense.amountCents)}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">{statusLabel}</p>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-500">
+              No upcoming projected expenses yet. Plan a projection to see it
+              here.
             </p>
           )}
         </section>
