@@ -48,7 +48,7 @@ Issues: https://github.com/RabitStudiosCanada/Family_Finance_Tracker/issues
 
 This is a personal project currently under active development. Once stable, contribution guidelines will be added.
 
-*Current Status: ACTIVE DEVELOPMENT - Phase 1 COMPLETE (Nov 10, 2025)*
+*Current Status: ACTIVE DEVELOPMENT / INTERNAL ALPHA TESTING - Phase 2 COMPLETE (Nov 11, 2025)*
 
 Remember: This is a tool for education and habit-building. The real goal isn't perfect budgets or maximized credit scores - it's raising financially literate, responsible humans who understand that money is a tool, not a mystery.
 
